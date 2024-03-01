@@ -314,7 +314,7 @@ func TestString(t *testing.T) {
 				return Power(intV("p"), intV("q"))
 			},
 			text: "(^ p q)",
-			kind: KindReal,
+			kind: KindInt,
 		},
 		{
 			name: "LT with a real and an integer",

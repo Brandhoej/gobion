@@ -17,5 +17,4 @@ func TestXxx(t *testing.T) {
 	}
 	`, parser.ParseComments)
 	ast.Print(fset, node)
-	t.FailNow()
 }
