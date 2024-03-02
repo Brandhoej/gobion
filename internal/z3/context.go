@@ -86,7 +86,7 @@ func compute[T any](context *Context, function func() T, keeps ...any) T {
 
 func (context *Context) NewConstant(symbolFactory SymbolFactory, sort *Sort) *AST {
 	symbol := symbolFactory(context)
-	return compute[*AST](context, func() *AST {
+	return compute(context, func() *AST {
 		return context.wrapAST(
 			C.Z3_mk_const(context.z3Context, symbol.z3Symbol, sort.z3Sort),
 		)
@@ -94,7 +94,7 @@ func (context *Context) NewConstant(symbolFactory SymbolFactory, sort *Sort) *AS
 }
 
 func (context *Context) NewReal(numerator, denominator int) *AST {
-	return compute[*AST](context, func() *AST {
+	return compute(context, func() *AST {
 		return context.wrapAST(
 			C.Z3_mk_real(context.z3Context, C.int(numerator), C.int(denominator)),
 		)
@@ -102,7 +102,7 @@ func (context *Context) NewReal(numerator, denominator int) *AST {
 }
 
 func (context *Context) NewInt(value int, sort *Sort) *AST {
-	return compute[*AST](context, func() *AST {
+	return compute(context, func() *AST {
 		return context.wrapAST(
 			C.Z3_mk_int(context.z3Context, C.int(value), sort.z3Sort),
 		)

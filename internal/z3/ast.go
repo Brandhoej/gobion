@@ -54,6 +54,14 @@ func (ast *AST) Context() *Context {
 	return ast.context
 }
 
+func (ast *AST) Simplify() *AST {
+	return compute(ast.context, func() *AST {
+		return ast.context.wrapAST(
+			C.Z3_simplify(ast.context.z3Context, ast.z3AST),
+		)
+	}, ast)
+}
+
 // Convert the given AST node into a string.
 //
 // The result buffer is statically allocated by Z3. It will

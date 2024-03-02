@@ -1,12 +1,14 @@
 package symbolic
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestXxx(t *testing.T) {
@@ -27,10 +29,16 @@ func TestAsd(t *testing.T) {
 	package example
 
 	func Foo(a, b bool) (ret bool) {
-		if b {
+		a = !b
+		if b && a {
 			b = !a
+		} else {
+			c := false
+			if !c {
+				b = !c
+			}
 		}
-		return !a
+		ret = b
 	}
 	`
 	fset := token.NewFileSet()
@@ -39,10 +47,29 @@ func TestAsd(t *testing.T) {
 
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	NewFunctionInterpreter(context, function)
+	interpreter := NewStatementInterpreter(context)
+	global := NewGoGlobalPath(context)
 
 	// Act
+	path := interpreter.Function(global, function)
+	fmt.Println(path.String())
 
 	// Assert
 	t.FailNow()
+}
+
+func TestDsa(t *testing.T) {
+	// Arrange
+	config := z3.NewConfig()
+	context := z3.NewContext(config)
+	variable := context.NewConstant(
+		z3.WithName("foo"), context.BooleanSort(),
+	)
+
+	// Act
+	identifier := variable.String()
+
+	// Assert
+	assert.Equal(t, "foo", identifier)
+	assert.Equal(t, z3.KindBoolean, variable.Sort().Kind())
 }
