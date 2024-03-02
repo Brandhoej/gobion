@@ -91,9 +91,10 @@ func (solver *Solver) Push() {
 	}, solver)
 }
 
-func (solver *Solver) Pop(amount uint) {
+func (solver *Solver) Pop(amount uint32) {
 	solver.context.do(func() {
-		C.Z3_solver_pop(solver.context.z3Context, solver.z3Sovler, C.uint(amount))
+		amount := C.uint(amount)
+		C.Z3_solver_pop(solver.context.z3Context, solver.z3Sovler, amount)
 	}, solver)
 }
 

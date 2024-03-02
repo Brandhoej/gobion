@@ -1,6 +1,7 @@
 package symbolic
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 
@@ -8,6 +9,9 @@ import (
 )
 
 /*
+TODO:
+- Convert a function to a symbolic representation.
+
 func Foo(a, b bool) bool {
 	if a && !b {
 		return true
@@ -33,12 +37,12 @@ func Bar(x, y int) int {
 type functionInterpreterConfig func(interpreter *FunctionInterpreter)
 
 type FunctionInterpreter struct {
-	expressions     *ExpressionInterpreter
-	solver          *z3.Solver
-	context         *z3.Context
-	returnVariables []*z3.AST
-	awaited         []func()
-	visited         func(node ast.Node)
+	expressions *ExpressionInterpreter
+	solver      *z3.Solver
+	context     *z3.Context
+	variables   map[string]*z3.AST
+	returns     []string
+	pc          *z3.AST
 }
 
 func WithSolver(solver *z3.Solver) functionInterpreterConfig {
@@ -47,34 +51,32 @@ func WithSolver(solver *z3.Solver) functionInterpreterConfig {
 	}
 }
 
-func Visited(observer func(node ast.Node)) functionInterpreterConfig {
-	return func(interpreter *FunctionInterpreter) {
-		interpreter.visited = observer
-	}
-}
-
 func NewFunctionInterpreter(context *z3.Context, function *ast.FuncDecl, configs ...functionInterpreterConfig) *FunctionInterpreter {
-	// Construct the return variables.
-	parameters := function.Type.Params
-	returns := make([]*z3.AST, 0, len(parameters.List))
-	for outer, field := range parameters.List {
-		for inner, name := range field.Names {
-			returns[outer+inner] = context.NewConstant(
-				z3.WithName(name.Name), context.BooleanSort(),
-			)
-		}
-	}
-
 	// Create the default interpreter.
+	variables := make(map[string]*z3.AST)
 	interpreter := &FunctionInterpreter{
 		expressions: &ExpressionInterpreter{
-			context: context,
+			context:   context,
+			variables: variables,
 		},
-		solver:          nil,
-		context:         context,
-		returnVariables: returns,
-		awaited:         make([]func(), 0),
+		solver:    nil,
+		context:   context,
+		variables: variables,
 	}
+
+	// Construct the return variables.
+	parameters := function.Type.Results.List
+	returns := make([]string, 0)
+	for _, field := range parameters {
+		for _, name := range field.Names {
+			variable := context.NewConstant(
+				z3.WithName(name.Name), context.BooleanSort(),
+			)
+			interpreter.variables[name.Name] = variable
+			returns = append(returns, name.Name)
+		}
+	}
+	interpreter.returns = returns
 
 	// Configure the interpreter with values that are optional.
 	for _, config := range configs {
@@ -92,163 +94,118 @@ func NewFunctionInterpreter(context *z3.Context, function *ast.FuncDecl, configs
 	return interpreter
 }
 
-func (interpreter *FunctionInterpreter) Step() {
-	length := len(interpreter.awaited)
-	if length == 0 {
-		return
+func (interpreter *FunctionInterpreter) function(function *ast.FuncDecl) {
+	// Add all formal input parameters to the context.
+	parameters := function.Type.Params.List
+	for _, parameter := range parameters {
+		for _, name := range parameter.Names {
+			variable := interpreter.context.NewConstant(
+				z3.WithName(name.Name), interpreter.context.BooleanSort(),
+			)
+			interpreter.variables[name.Name] = variable
+		}
 	}
 
-	// We want a stack like behvaiour so we take from the end and remove the last element.
-	interpreter.awaited[length-1]()
-	interpreter.awaited = interpreter.awaited[0 : length-1]
+	interpreter.Block(function.Body)
 }
 
-func (interpreter *FunctionInterpreter) await(awaited func()) {
-	interpreter.awaited = append(interpreter.awaited, awaited)
-}
-
-func (interpreter *FunctionInterpreter) function(function *ast.FuncDecl) {
-	interpreter.await(func() {
-		interpreter.solver.Push()
-		interpreter.block(function.Body)
-		interpreter.visited(function.Body)
-		interpreter.solver.Pop(1)
-	})
-}
-
-func (interpreter *FunctionInterpreter) statement(statement ast.Stmt) {
+func (interpreter *FunctionInterpreter) Statement(statement ast.Stmt) {
 	switch cast := any(statement).(type) {
 	case *ast.BlockStmt:
-		interpreter.block(cast)
+		interpreter.Block(cast)
 	case *ast.IfStmt:
-		interpreter.ifBranch(cast)
+		interpreter.IfBranch(cast)
 	case *ast.ReturnStmt:
-		interpreter.returns(cast)
+		interpreter.Returns(cast)
 	case *ast.ForStmt:
-		interpreter.forLoop(cast)
+		interpreter.ForLoop(cast)
+	case *ast.AssignStmt:
+		interpreter.Assignment(cast)
+	default:
+		panic("Unsupported")
 	}
-	panic("Unsupported")
 }
 
-func (interpreter *FunctionInterpreter) block(block *ast.BlockStmt) {
-	interpreter.await(func() {
-		interpreter.solver.Push()
-		for _, statement := range block.List {
-			interpreter.statement(statement)
-		}
-		interpreter.visited(block)
-		interpreter.solver.Pop(1)
-	})
+func (interpreter *FunctionInterpreter) Block(block *ast.BlockStmt) {
+	for _, statement := range block.List {
+		interpreter.Statement(statement)
+	}
 }
 
-func (interpreter *FunctionInterpreter) ifBranch(branch *ast.IfStmt) {
-	hasAlternative := branch.Else != nil
-
+func (interpreter *FunctionInterpreter) IfBranch(branch *ast.IfStmt) {
 	// Create scope from which the initialisation is available.
 	if branch.Init != nil {
-		interpreter.await(func() {
-			interpreter.solver.Push()
-			interpreter.statement(branch.Init)
-			interpreter.visited(branch.Init)
-		})
+		interpreter.Statement(branch.Init)
 	}
 
 	var condition *z3.AST
-	interpreter.await(func() {
-		// We set the condition in the consequence such that the alternative can use it.
-		// We dont need a seperate awaited execution for the condition.
-		// The reason for this is that the condition will always be present.
-		condition = interpreter.expressions.Expression(branch.Cond)
+	// We set the condition in the consequence such that the alternative can use it.
+	// We dont need a seperate awaited execution for the condition.
+	// The reason for this is that the condition will always be present.
+	condition = interpreter.expressions.Expression(branch.Cond)
 
-		// Create scope of the consequence which is not shared between this and the optional alternative branch.
-		interpreter.solver.Push()
-		interpreter.solver.Assert(condition)
-		interpreter.block(branch.Body)
-		interpreter.visited(branch.Body)
-		interpreter.solver.Pop(1)
+	// Create scope of the consequence which is not shared between this and the optional alternative branch.
+	interpreter.solver.Assert(condition)
+	interpreter.Block(branch.Body)
 
-		// Pop the initilisation scope in the consequence if we do not have an alternative branch.
-		if !hasAlternative {
-			interpreter.solver.Pop(1)
-		}
-	})
+	interpreter.solver.Assert(z3.Not(condition))
 
 	// Alternative branch (else).
-	if hasAlternative {
-		interpreter.await(func() {
-			interpreter.solver.Push()
-			interpreter.solver.Assert(z3.Not(condition))
-			interpreter.statement(branch.Else)
-			interpreter.visited(branch.Else)
-			interpreter.solver.Pop(1)
-
-			// Pop the initilisation scope.
-			interpreter.solver.Pop(1)
-		})
+	if branch.Else != nil {
+		interpreter.Statement(branch.Else)
 	}
 }
 
-func (interpreter *FunctionInterpreter) forLoop(loop *ast.ForStmt) {
-	hasInitialisation := loop.Init != nil
-	hasConditional := loop.Cond != nil
-	hasUpdate := loop.Post != nil
-
-	if hasInitialisation {
-		interpreter.await(func() {
-			// Create for loop scope with potentially new variables from initialisation.
-			interpreter.solver.Push()
-			interpreter.statement(loop.Init)
-			interpreter.visited(loop.Init)
-		})
+func (interpreter *FunctionInterpreter) ForLoop(loop *ast.ForStmt) {
+	if loop.Init != nil {
+		interpreter.Statement(loop.Init)
 	}
 
-	interpreter.await(func() {
-		// If we did not have an initialisation we need to create the scope when to interpret the body.
-		if !hasInitialisation {
-			interpreter.solver.Push()
-		}
+	// The default loop condition is true. Otherwise, we interpret the loop condition and assert it.
+	condition := interpreter.context.NewTrue()
+	if loop.Cond != nil {
+		condition = interpreter.expressions.Expression(loop.Cond)
+	}
+	interpreter.solver.Assert(condition)
 
-		// The default loop condition is true. Otherwise, we interpret the loop condition and assert it.
-		condition := interpreter.context.NewTrue()
-		if hasConditional {
-			condition = interpreter.expressions.Expression(loop.Cond)
-		}
-		interpreter.solver.Assert(condition)
+	// After the loop condition is interpreted we interpret the loop body.
+	interpreter.Block(loop.Body)
 
-		// After the loop condition is interpreted we interpret the loop body.
-		interpreter.block(loop.Body)
-		interpreter.visited(loop.Body)
-
-		// If we dont have an update we have to close the scope after the body.
-		if !hasUpdate {
-			interpreter.solver.Pop(1)
-		}
-	})
-
-	interpreter.await(func() {
-		if hasUpdate {
-			interpreter.statement(loop.Post)
-			interpreter.visited(loop.Post)
-			
-			// The update has to close the scope after it has been interpreted. Otherwise, the body closes it.
-			interpreter.solver.Pop(1)
-		}
-	})
+	if loop.Post != nil {
+		interpreter.Statement(loop.Post)
+	}
 }
 
-func (interpreter *FunctionInterpreter) returns(exit *ast.ReturnStmt) {
-	interpreter.await(func() {
-		for idx, result := range exit.Results {
-			expr := interpreter.expressions.Expression(result)
-			returnVar := interpreter.returnVariables[idx]
-			interpreter.solver.Assert(z3.Eq(returnVar, expr))
+func (interpreter *FunctionInterpreter) Returns(exit *ast.ReturnStmt) {
+	if len(exit.Results) == 0 {
+		return
+	}
+
+	for idx, result := range exit.Results {
+		expr := interpreter.expressions.Expression(result)
+		namedReturn := interpreter.returns[idx]
+		returnVariable := interpreter.variables[namedReturn]
+		assignment := z3.Eq(returnVariable, expr)
+		interpreter.solver.Assert(assignment)
+	}
+
+	fmt.Println(interpreter.solver.String())
+}
+
+func (interpreter *FunctionInterpreter) Assignment(assignment *ast.AssignStmt) {
+	if assignment.Tok == token.ASSIGN {
+		for idx := range assignment.Lhs {
+			lhs := interpreter.expressions.Expression(assignment.Lhs[idx])
+			rhs := interpreter.expressions.Expression(assignment.Rhs[idx])
+			equality := z3.Eq(lhs, rhs)
+			interpreter.solver.Assert(equality)
 		}
-		interpreter.visited(exit)
-	})
+	}
 }
 
 type ExpressionInterpreter struct {
-	context *z3.Context
+	context   *z3.Context
+	variables map[string]*z3.AST
 }
 
 func (interpreter *ExpressionInterpreter) Expression(expression ast.Expr) *z3.AST {
@@ -259,6 +216,8 @@ func (interpreter *ExpressionInterpreter) Expression(expression ast.Expr) *z3.AS
 		return interpreter.Unary(cast)
 	case *ast.ParenExpr:
 		return interpreter.Parenthesis(cast)
+	case *ast.Ident:
+		return interpreter.Identifier(cast)
 	}
 	panic("Unsupported")
 }
@@ -266,9 +225,9 @@ func (interpreter *ExpressionInterpreter) Expression(expression ast.Expr) *z3.AS
 func (interpreter *ExpressionInterpreter) Binary(binary *ast.BinaryExpr) *z3.AST {
 	lhs, rhs := interpreter.Expression(binary.X), interpreter.Expression(binary.Y)
 	switch binary.Op {
-	case token.AND:
+	case token.LAND:
 		return z3.And(lhs, rhs)
-	case token.OR:
+	case token.LOR:
 		return z3.Or(lhs, rhs)
 	case token.XOR:
 		return z3.Xor(lhs, rhs)
@@ -295,6 +254,7 @@ func (interpreter *ExpressionInterpreter) Identifier(identifier *ast.Ident) *z3.
 		return interpreter.context.NewTrue()
 	case "false":
 		return interpreter.context.NewFalse()
+	default:
+		return interpreter.variables[identifier.Name]
 	}
-	panic("Unsupported")
 }
