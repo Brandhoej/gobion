@@ -44,7 +44,7 @@ func (context *Context) wrapAST(z3AST C.Z3_ast) *AST {
 		// Make derement of reference counter atomic by wrapping it in a locked state.
 		context.do(func() {
 			C.Z3_dec_ref(context.z3Context, ast.z3AST)
-		})
+		}, ast)
 	})
 
 	return ast
@@ -52,6 +52,51 @@ func (context *Context) wrapAST(z3AST C.Z3_ast) *AST {
 
 func (ast *AST) Context() *Context {
 	return ast.context
+}
+
+func (ast *AST) Substitute(from, to []*AST) *AST {
+	if len(from) != len(to) {
+		panic("Substitution to/from must have the same length")
+	}
+	length := len(from)
+	context := ast.context
+
+	cFrom := make([]C.Z3_ast, 0, length)
+	cTo := make([]C.Z3_ast, 0, length)
+
+	for idx := range from {
+		cFrom[idx] = from[idx].z3AST
+		cTo[idx] = to[idx].z3AST
+	}
+
+	return compute(context, func() *AST {
+		return context.wrapAST(
+			C.Z3_substitute(
+				context.z3Context,
+				ast.z3AST, C.uint(length),
+				&cFrom[0], &cTo[0],
+			),
+		)
+	}, ast, from, to)
+}
+
+func (ast *AST) SubstituteVariables(to []*AST) *AST {
+	length := len(to)
+	context := ast.context
+	cTo := make([]C.Z3_ast, 0, length)
+
+	for idx := range to {
+		cTo[idx] = to[idx].z3AST
+	}
+
+	return compute(context, func() *AST {
+		return context.wrapAST(
+			C.Z3_substitute_vars(
+				context.z3Context, ast.z3AST,
+				C.uint(length), &cTo[0],
+			),
+		)
+	}, ast, to)
 }
 
 func (ast *AST) Simplify() *AST {

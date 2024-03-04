@@ -23,7 +23,7 @@ func Multiply(lhs *AST, rhs ...*AST) *AST {
 	)
 }
 
-func Subtraction(lhs *AST, rhs ...*AST) *AST {
+func Subtract(lhs *AST, rhs ...*AST) *AST {
 	return nary(
 		func(context C.Z3_context, length C.uint, operands ...C.Z3_ast) C.Z3_ast {
 			return C.Z3_mk_sub(context, length, &operands[0])
@@ -39,7 +39,7 @@ func Minus(operand *AST) *AST {
 	)
 }
 
-func Division(lhs, rhs *AST) *AST {
+func Divide(lhs, rhs *AST) *AST {
 	return binary(
 		func(context C.Z3_context, lhs, rhs C.Z3_ast) C.Z3_ast {
 			return C.Z3_mk_div(context, lhs, rhs)

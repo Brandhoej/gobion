@@ -151,7 +151,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Subtraction with a real and an integer",
 			operation: func() *AST {
-				return Subtraction(intV("p"), realV("q"))
+				return Subtract(intV("p"), realV("q"))
 			},
 			text: "(- (to_real p) q)",
 			kind: KindReal,
@@ -159,7 +159,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Subtraction with two reals",
 			operation: func() *AST {
-				return Subtraction(realV("p"), realV("q"))
+				return Subtract(realV("p"), realV("q"))
 			},
 			text: "(- p q)",
 			kind: KindReal,
@@ -167,7 +167,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Subtraction with two integers",
 			operation: func() *AST {
-				return Subtraction(intV("p"), intV("q"))
+				return Subtract(intV("p"), intV("q"))
 			},
 			text: "(- p q)",
 			kind: KindInt,
@@ -191,7 +191,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Division with a real and an integer",
 			operation: func() *AST {
-				return Division(intV("p"), realV("q"))
+				return Divide(intV("p"), realV("q"))
 			},
 			text: "(div p (to_int q))",
 			kind: KindInt,
@@ -199,7 +199,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Division with an integer and a real",
 			operation: func() *AST {
-				return Division(realV("p"), intV("q"))
+				return Divide(realV("p"), intV("q"))
 			},
 			text: "(/ p (to_real q))",
 			kind: KindReal,
@@ -207,7 +207,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Division with two reals",
 			operation: func() *AST {
-				return Division(realV("p"), realV("q"))
+				return Divide(realV("p"), realV("q"))
 			},
 			text: "(/ p q)",
 			kind: KindReal,
@@ -215,7 +215,7 @@ func TestString(t *testing.T) {
 		{
 			name: "Division with two integers",
 			operation: func() *AST {
-				return Division(intV("p"), intV("q"))
+				return Divide(intV("p"), intV("q"))
 			},
 			text: "(div p q)",
 			kind: KindInt,

@@ -22,7 +22,7 @@ func Multiply[T Numerals](lhs T, rhs ...T) T {
 }
 
 func Subtraction[T Numerals](lhs T, rhs ...T) T {
-	return NewValuation[T](z3.Subtraction(lhs.ast(), asts[T](rhs...)...))
+	return NewValuation[T](z3.Subtract(lhs.ast(), asts[T](rhs...)...))
 }
 
 func Minus[T Numerals](operand T) T {
@@ -30,7 +30,7 @@ func Minus[T Numerals](operand T) T {
 }
 
 func Division[T Numerals](lhs, rhs T) T {
-	return NewValuation[T](z3.Division(lhs.ast(), rhs.ast()))
+	return NewValuation[T](z3.Divide(lhs.ast(), rhs.ast()))
 }
 
 func Modulus[T Numerals](lhs, rhs T) T {

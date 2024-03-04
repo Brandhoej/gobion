@@ -25,20 +25,41 @@ func TestXxx(t *testing.T) {
 
 func TestAsd(t *testing.T) {
 	// Arrange
-	source := `
+	/*source := `
 	package example
 
-	func Foo(a, b bool) (ret bool) {
-		a = !b
-		if b && a {
+	func Foo(a, b bool, i int) (ret bool) {
+		a = i > 5
+		if i < 10 || b && a {
 			b = !a
+			i = 123
 		} else {
 			c := false
-			if !c {
+			if c {
 				b = !c
 			}
 		}
 		ret = b
+	}
+	`*/
+	/*source := `
+	package example
+
+	func Foo(n int) (sum int) {
+		for i := 0; i < n; i++ {
+			sum += 1
+		}
+	}
+	`*/
+	source := `
+	package example
+
+	func Foo(n int) (sum int) {
+		n += 1
+		n = n + 1
+		if n >= 2 {
+			sum = -1
+		}
 	}
 	`
 	fset := token.NewFileSet()

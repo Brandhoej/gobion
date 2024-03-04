@@ -1,8 +1,9 @@
 package z3
 
 /*
-#cgo LDFLAGS: -lz3
-#include <z3.h>
+#cgo CFLAGS: -I../../modules/z3
+#cgo LDFLAGS: -L../../modules/z3 -lz3
+#include "../../modules/z3/src/api/z3.h"
 #include <stdlib.h>
 */
 import "C"
@@ -38,7 +39,7 @@ func (context *Context) NewStringSymbol(identifier string) Symbol {
 	cIdentifier := C.CString(identifier)
 	defer C.free(unsafe.Pointer(cIdentifier))
 
-	return compute[Symbol](context, func() Symbol {
+	return compute(context, func() Symbol {
 		return Symbol{
 			context:  context,
 			z3Symbol: C.Z3_mk_string_symbol(context.z3Context, cIdentifier),
@@ -47,7 +48,7 @@ func (context *Context) NewStringSymbol(identifier string) Symbol {
 }
 
 func (context *Context) NewIntegerSymbol(value int) Symbol {
-	return compute[Symbol](context, func() Symbol {
+	return compute(context, func() Symbol {
 		return Symbol{
 			context:  context,
 			z3Symbol: C.Z3_mk_int_symbol(context.z3Context, C.int(value)),

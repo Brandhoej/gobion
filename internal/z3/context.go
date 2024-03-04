@@ -1,14 +1,16 @@
 package z3
 
 /*
-#cgo LDFLAGS: -lz3
-#include <z3.h>
+#cgo CFLAGS: -I../../modules/z3
+#cgo LDFLAGS: -L../../modules/z3 -lz3
+#include "../../modules/z3/src/api/z3.h"
 #include <stdlib.h>
 */
 import "C"
 import (
 	"runtime"
 	"sync"
+	"unsafe"
 )
 
 // Manager of all other Z3 objects, global configuration options, etc.
@@ -84,6 +86,40 @@ func compute[T any](context *Context, function func() T, keeps ...any) T {
 	return value
 }
 
+func (context *Context) Parse(str string) *ASTVector {
+	// Allocate an unmanged string and make sure it is freed.
+	cStr := C.CString(str)
+	defer C.free(unsafe.Pointer(cStr))
+
+	return context.wrapASTVector(
+		C.Z3_parse_smtlib2_string(
+			context.z3Context, cStr,
+			0, nil, nil,
+			0, nil, nil,
+		),
+	)
+}
+
+func (context *Context) NewFunctionDeclaration(symbolFactory SymbolFactory, inputs []*Sort, output *Sort) *FunctionDeclaration {
+	symbol := symbolFactory(context)
+	return compute(context, func() *FunctionDeclaration {
+		domain := make([]C.Z3_sort, 0)
+		for idx := range inputs {
+			domain = append(domain, inputs[idx].z3Sort)
+		}
+
+		return context.wrapFunctionDeclaration(
+			C.Z3_mk_func_decl(
+				context.z3Context,
+				symbol.z3Symbol,
+				C.uint(len(domain)),
+				&domain[0],
+				output.z3Sort,
+			),
+		)
+	}, context)
+}
+
 func (context *Context) NewConstant(symbolFactory SymbolFactory, sort *Sort) *AST {
 	symbol := symbolFactory(context)
 	return compute(context, func() *AST {
@@ -91,6 +127,14 @@ func (context *Context) NewConstant(symbolFactory SymbolFactory, sort *Sort) *AS
 			C.Z3_mk_const(context.z3Context, symbol.z3Symbol, sort.z3Sort),
 		)
 	}, sort, symbolFactory)
+}
+
+func (context *Context) NewBound(index uint, sort *Sort) *AST {
+	return compute(context, func() *AST {
+		return context.wrapAST(
+			C.Z3_mk_bound(context.z3Context, C.uint(index), sort.z3Sort),
+		)
+	}, sort)
 }
 
 func (context *Context) NewReal(numerator, denominator int) *AST {

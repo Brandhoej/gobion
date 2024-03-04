@@ -1,25 +1,27 @@
 package symbolic
 
-type Valuations[T any] interface {
-	Load(symbol Symbol) (T, bool)
-	Store(symbol Symbol, value T)
+import "github.com/Brandhoej/gobion/internal/z3"
+
+type Valuations interface {
+	Load(symbol Symbol) (*z3.AST, bool)
+	Store(symbol Symbol, value *z3.AST)
 }
 
-type ValuationsMap[T any] struct {
-	valuations map[Symbol]T
+type ValuationsMap struct {
+	valuations map[Symbol]*z3.AST
 }
 
-func NewEnvironmentMap[T any]() *ValuationsMap[T] {
-	return &ValuationsMap[T]{
-		valuations: map[Symbol]T{},
+func NewEnvironmentMap() *ValuationsMap {
+	return &ValuationsMap{
+		valuations: map[Symbol]*z3.AST{},
 	}
 }
 
-func (environment *ValuationsMap[T]) Load(symbol Symbol) (value T, exists bool) {
+func (environment *ValuationsMap) Load(symbol Symbol) (value *z3.AST, exists bool) {
 	value, exists = environment.valuations[symbol]
 	return
 }
 
-func (environment *ValuationsMap[T]) Store(symbol Symbol, value T) {
+func (environment *ValuationsMap) Store(symbol Symbol, value *z3.AST) {
 	environment.valuations[symbol] = value
 }

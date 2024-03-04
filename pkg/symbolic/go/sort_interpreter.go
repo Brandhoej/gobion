@@ -2,6 +2,7 @@ package symbolic
 
 import (
 	"go/ast"
+	"go/token"
 
 	"github.com/Brandhoej/gobion/internal/z3"
 )
@@ -14,9 +15,18 @@ func (interpreter *SortInterpreter) Expression(expression ast.Expr) *z3.Sort {
 	switch cast := any(expression).(type) {
 	case *ast.Ident:
 		return interpreter.Identifier(cast)
-	default:
-		panic("Unsupported expression")
+	case *ast.BasicLit:
+		return interpreter.Literal(cast)
 	}
+	panic("Unsupported expression")
+}
+
+func (interpreter *SortInterpreter) Literal(literal *ast.BasicLit) *z3.Sort {
+	switch literal.Kind {
+	case token.INT:
+		return interpreter.context.IntegerSort()
+	}
+	panic("Unsupported literal type")
 }
 
 func (interpreter *SortInterpreter) Identifier(identifier *ast.Ident) *z3.Sort {
@@ -31,7 +41,6 @@ func (interpreter *SortInterpreter) Identifier(identifier *ast.Ident) *z3.Sort {
 		return interpreter.context.BooleanSort()
 	case "true":
 		return interpreter.context.BooleanSort()
-	default:
-		panic("Unknown sort")
 	}
+	panic("Unknown sort")
 }

@@ -19,6 +19,10 @@ func (sort *Sort) AST() *AST {
 	)
 }
 
+func (sort *Sort) Context() *Context {
+	return sort.context
+}
+
 func (sort *Sort) Kind() Kind {
 	return Kind(C.Z3_get_sort_kind(sort.context.z3Context, sort.z3Sort))
 }

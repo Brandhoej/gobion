@@ -8,14 +8,14 @@ import (
 )
 
 type StatementInterpreter struct {
-	expressions *ExpressionInterpreter
+	expressions *GoExpressionInterpreter
 	sorts       *SortInterpreter
 	context     *z3.Context
 }
 
 func NewStatementInterpreter(context *z3.Context) *StatementInterpreter {
 	return &StatementInterpreter{
-		expressions: &ExpressionInterpreter{
+		expressions: &GoExpressionInterpreter{
 			context: context,
 		},
 		sorts: &SortInterpreter{
@@ -32,7 +32,7 @@ func (interpreter *StatementInterpreter) Fields(path *GoPath, fields *ast.FieldL
 			variable := interpreter.context.NewConstant(
 				z3.WithName(name.Name), sort,
 			)
-			path.scope.Declare(name.Name, variable, variable)
+			path.scope.Declare(name.Name, variable)
 		}
 	}
 
@@ -56,41 +56,51 @@ func (interpreter *StatementInterpreter) Statement(path *GoPath, statement ast.S
 		return interpreter.Block(path, cast)
 	case *ast.IfStmt:
 		return interpreter.IfBranch(path, cast)
-	/*case *ast.ReturnStmt:
-	interpreter.Returns(pc, cast)*/
 	case *ast.ForStmt:
 		return interpreter.ForLoop(path, cast)
 	case *ast.AssignStmt:
 		return interpreter.Assignment(path, cast)
-	case *ast.GenDecl:
+	case *ast.IncDecStmt:
+		return interpreter.IncrementDecrement(path, cast)
 	default:
 		panic("Unsupported")
+	}	
+}
+
+func (interpreter *StatementInterpreter) Block(path *GoPath, block *ast.BlockStmt) *GoPath {
+	for _, statement := range block.List {
+		path = interpreter.Statement(path, statement)
 	}
 
 	return path
 }
 
-func (interpreter *StatementInterpreter) Block(path *GoPath, block *ast.BlockStmt) *GoPath {
-	for _, statement := range block.List {
-		interpreter.Statement(path, statement)
+func (interpreter *StatementInterpreter) IncrementDecrement(path *GoPath, incDec *ast.IncDecStmt) *GoPath {
+	identifier := incDec.X.(*ast.Ident).Name
+	variable, _ := path.scope.Variable(identifier)
+	sort := interpreter.context.IntegerSort()
+	one := interpreter.context.NewInt(1, sort)
+	switch incDec.Tok {
+	case token.INC:
+		path.scope.Assign(identifier, z3.Add(variable, one))
+	case token.DEC:
+		path.scope.Assign(identifier, z3.Subtract(variable, one))
 	}
-
 	return path
 }
 
 func (interpreter *StatementInterpreter) Assignment(path *GoPath, assignment *ast.AssignStmt) *GoPath {
 	for idx := range assignment.Lhs {
+		identifier := assignment.Lhs[idx].(*ast.Ident).Name
 		value := interpreter.expressions.Expression(path.scope, assignment.Rhs[idx]).Simplify()
-		if assignment.Tok == token.ASSIGN {
-			variable := interpreter.expressions.Expression(path.scope, assignment.Lhs[idx])
-			path.scope.AssignTo(variable.String(), value)
-		} else if assignment.Tok == token.DEFINE {
-			identifier := assignment.Lhs[idx].(*ast.Ident).Name
-			sort := interpreter.sorts.Expression(assignment.Rhs[idx])
-			variable := path.context.NewConstant(
-				z3.WithName(identifier), sort,
-			)
-			path.scope.Declare(identifier, variable, value)
+		switch assignment.Tok {
+		case token.ASSIGN: // =
+			path.scope.Assign(identifier, value)
+		case token.DEFINE: // :=
+			path.scope.Declare(identifier, value)
+		case token.ADD_ASSIGN: // +=
+			valuation, _ := path.scope.Valuation(identifier)
+			path.scope.Assign(identifier, z3.Add(valuation, value))
 		}
 	}
 
@@ -120,7 +130,7 @@ func (interpreter *StatementInterpreter) IfBranch(path *GoPath, branch *ast.IfSt
 		// Then, we reduce it to if-else which is a if-not(then).
 		if consequence == nil {
 			alternative.MergeIT()
-		} else if consequence != nil && alternative != nil {
+		} else if alternative != nil {
 			// If both branches in the if-then-else are satisfiable.
 			// Then. we branch with both branches.
 			return consequence.MergeITE(alternative)
@@ -138,25 +148,32 @@ func (interpreter *StatementInterpreter) IfBranch(path *GoPath, branch *ast.IfSt
 }
 
 func (interpreter *StatementInterpreter) ForLoop(path *GoPath, loop *ast.ForStmt) *GoPath {
+	// We enclose the for-loop to ensure that variables defined in the initialisation is not visible outside.
+	enclosure := path.Branch(interpreter.context.NewTrue())
 	if loop.Init != nil {
-		path = interpreter.Statement(path, loop.Init)
+		enclosure = interpreter.Statement(enclosure, loop.Init)
 	}
 
 	// The default loop condition is true. Otherwise, we interpret the loop condition and assert it.
 	condition := interpreter.context.NewTrue()
 	if loop.Cond != nil {
-		condition = interpreter.expressions.Expression(path.scope, loop.Cond).Simplify()
+		condition = interpreter.expressions.Expression(enclosure.scope, loop.Cond).Simplify()
 	}
-	if body := path.Branch(condition); body != nil {
+
+	if body := enclosure.Branch(condition); body != nil {
 		// After the loop condition is interpreted we interpret the loop body.
-		interpreter.Block(body, loop.Body)
-	
-		if loop.Post != nil {
-			interpreter.Statement(body, loop.Post)
+		// Single Static Assignment is handled by the scope so we can just interpret the body multiple times.
+		// TODO: Estimate the amount of time to unroll the loop body.
+		for i := 0; i < 5; i++ {
+			body = interpreter.Block(body, loop.Body)
 		}
-	
+
+		if loop.Post != nil {
+			body = interpreter.Statement(body, loop.Post)
+		}
+
 		return body.MergeIT()
 	}
 
-	return path
+	return enclosure
 }

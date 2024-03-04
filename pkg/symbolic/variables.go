@@ -1,25 +1,65 @@
 package symbolic
 
-type Variables[T any] interface {
-	Declare(symbol Symbol, variable T)
-	Variable(symbol Symbol) (variable T, exists bool)
+import (
+	"fmt"
+
+	"github.com/Brandhoej/gobion/internal/z3"
+)
+
+type Variables interface {
+	Bind(index uint, sort *z3.Sort) (variable *z3.AST)
+	Declare(symbol Symbol, identifier string, sort *z3.Sort) (variable *z3.AST)
+	Advance(symbol Symbol) (variable *z3.AST, exists bool)
+	Variable(symbol Symbol) (variable *z3.AST, exists bool)
 }
 
-type VariablesMap[T any] struct {
-	variables map[Symbol]T
+type VariablesMap struct {
+	identifiers map[Symbol]string
+	counters map[Symbol]int
+	variables map[Symbol]*z3.AST
 }
 
-func NewVariablesMap[T any]() *VariablesMap[T] {
-	return &VariablesMap[T]{
-		variables: map[Symbol]T{},
+func NewVariablesMap() *VariablesMap {
+	return &VariablesMap{
+		identifiers: map[Symbol]string{},
+		counters: map[Symbol]int{},
+		variables: map[Symbol]*z3.AST{},
 	}
 }
 
-func (environment *VariablesMap[T]) Declare(symbol Symbol, variable T) {
-	environment.variables[symbol] = variable
+func (mapping *VariablesMap) Bind(index uint, sort *z3.Sort) (variable *z3.AST) {
+	variable = sort.Context().NewBound(index, sort)
+	return
 }
 
-func (environment *VariablesMap[T]) Variable(symbol Symbol) (variable T, exists bool) {
-	variable, exists = environment.variables[symbol]
-	return variable, exists
+func (mapping *VariablesMap) Declare(symbol Symbol, identifier string, sort *z3.Sort) (variable *z3.AST) {
+	mapping.identifiers[symbol] = identifier
+	mapping.counters[symbol] = 0
+	variable = sort.Context().NewConstant(
+		z3.WithName(identifier+"_0"), sort,
+	)
+	mapping.variables[symbol] = variable
+	return
+}
+
+func (mapping *VariablesMap) Advance(symbol Symbol) (variable *z3.AST, exists bool) {
+	variable, exists = mapping.Variable(symbol)
+	if !exists {
+		return
+	}
+
+	original := mapping.identifiers[symbol]
+	counter := mapping.counters[symbol] + 1
+	variable = variable.Context().NewConstant(
+		z3.WithName(fmt.Sprintf("%s_%v", original, counter)), variable.Sort(),
+	)
+	mapping.variables[symbol] = variable
+	mapping.counters[symbol] = counter
+
+	return
+}
+
+func (mapping *VariablesMap) Variable(symbol Symbol) (variable *z3.AST, exists bool) {
+	variable, exists = mapping.variables[symbol]
+	return
 }
