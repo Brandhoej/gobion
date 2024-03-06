@@ -7,7 +7,6 @@ import (
 )
 
 type Variables interface {
-	Bind(index uint, sort *z3.Sort) (variable *z3.AST)
 	Declare(symbol Symbol, identifier string, sort *z3.Sort) (variable *z3.AST)
 	Advance(symbol Symbol) (variable *z3.AST, exists bool)
 	Variable(symbol Symbol) (variable *z3.AST, exists bool)
@@ -15,21 +14,16 @@ type Variables interface {
 
 type VariablesMap struct {
 	identifiers map[Symbol]string
-	counters map[Symbol]int
-	variables map[Symbol]*z3.AST
+	counters    map[Symbol]int
+	variables   map[Symbol]*z3.AST
 }
 
 func NewVariablesMap() *VariablesMap {
 	return &VariablesMap{
 		identifiers: map[Symbol]string{},
-		counters: map[Symbol]int{},
-		variables: map[Symbol]*z3.AST{},
+		counters:    map[Symbol]int{},
+		variables:   map[Symbol]*z3.AST{},
 	}
-}
-
-func (mapping *VariablesMap) Bind(index uint, sort *z3.Sort) (variable *z3.AST) {
-	variable = sort.Context().NewBound(index, sort)
-	return
 }
 
 func (mapping *VariablesMap) Declare(symbol Symbol, identifier string, sort *z3.Sort) (variable *z3.AST) {

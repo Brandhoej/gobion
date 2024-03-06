@@ -119,3 +119,35 @@ func (solver *Solver) Dimacs(includeNames bool) string {
 		)
 	}, solver)
 }
+
+func (solver *Solver) Prove(proposition *AST) *Model {
+	solver.Push()
+	defer solver.Pop(1)
+
+	contradiction := Not(proposition)
+	solver.Assert(contradiction)
+	sat := solver.Check()
+	if sat.IsTrue() {
+		return solver.Model()
+	}
+
+	return nil
+}
+
+func (solver *Solver) IsTautology(proposition *AST) *Model {
+	return solver.Prove(
+		Eq(proposition, solver.True()),
+	)
+}
+
+func (solver *Solver) HasSolution() bool {
+	return solver.Check().IsTrue()
+}
+
+func (solver *Solver) True() *AST {
+	return solver.context.NewTrue()
+}
+
+func (solver *Solver) False() *AST {
+	return solver.context.NewFalse()
+}

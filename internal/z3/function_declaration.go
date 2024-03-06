@@ -9,14 +9,14 @@ import "C"
 
 // Kind of AST used to represent function symbols.
 type FunctionDeclaration struct {
-	context *Context
+	context               *Context
 	z3FunctionDeclaration C.Z3_func_decl
 	noEq
 }
 
 func (context *Context) wrapFunctionDeclaration(function C.Z3_func_decl) *FunctionDeclaration {
 	return &FunctionDeclaration{
-		context: context,
+		context:               context,
 		z3FunctionDeclaration: function,
 	}
 }

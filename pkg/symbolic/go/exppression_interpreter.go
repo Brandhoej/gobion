@@ -99,25 +99,7 @@ func (interpreter *GoExpressionInterpreter) Identifier(scope symbolic.Scope, ide
 	case "false":
 		return interpreter.context.NewFalse()
 	default:
-		// Interpretation of global variables can be reduced to the variable declaration.
-		/*if scope.IsGlobal() && scope.IsLocal(identifier.Name) {
-			variable, exists := scope.Variable(identifier.Name)
-			if !exists {
-				panic("Symbol does not have a variable declared")
-			}
-			return variable
-		}*/
-
-		// If the variable is not global then we want to reduce it.
-		ident := identifier.Name
-		if identifier.Name == "n" {
-			ident = "0"
-		}
-		if identifier.Name == "m" {
-			ident = "1"
-		}
-
-		valuation, exists := scope.Valuation(ident)
+		valuation, exists := scope.Valuation(identifier.Name)
 		if !exists {
 			panic("Symbol does not have a valuation")
 		}

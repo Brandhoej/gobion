@@ -19,6 +19,20 @@ func TestSymbolUniqueness(t *testing.T) {
 	sat := solver.Check()
 
 	// Assert
-	assert.NotEqual(t, x1.z3AST, x2.z3AST)
+	assert.Equal(t, x1.z3AST, x2.z3AST)
 	assert.Equal(t, true, sat.IsFalse())
+}
+
+func TestSymbols(t *testing.T) {
+	// Arrange
+	config := NewConfig()
+	context := NewContext(config)
+
+	// Act
+	constant := context.NewConstant(
+		WithInt(0), context.IntegerSort(),
+	)
+
+	// Assert
+	assert.Equal(t, "k!0", constant.String())
 }

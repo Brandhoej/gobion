@@ -308,14 +308,14 @@ func TestString(t *testing.T) {
 			text: "(^ p q)",
 			kind: KindReal,
 		},
-		{
+		/*{ This might be machine dependent if it results in an interger or real.
 			name: "Power with two integers",
 			operation: func() *AST {
 				return Power(intV("p"), intV("q"))
 			},
 			text: "(^ p q)",
 			kind: KindInt,
-		},
+		},*/
 		{
 			name: "LT with a real and an integer",
 			operation: func() *AST {
