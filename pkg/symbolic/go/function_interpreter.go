@@ -206,7 +206,7 @@ func (interpreter *functionInterpreter) incrementDecrement(path *GoPath, incDec 
 	} else {
 		path.scope.Assign(identifier, z3.Subtract(valuation, one))
 	}
-	
+
 	return path
 }
 
