@@ -1,4 +1,4 @@
-package symbolic
+package golang
 
 import (
 	"go/ast"
@@ -55,13 +55,13 @@ func (interpreter *GoExpressionInterpreter) Binary(scope symbolic.Scope, binary 
 	case token.GTR: // >
 		return z3.GT(lhs, rhs)
 	// Arthimitic operators:
-	case token.ADD:
+	case token.ADD: // +
 		return z3.Add(lhs, rhs)
-	case token.SUB:
+	case token.SUB: // -
 		return z3.Subtract(lhs, rhs)
-	case token.MUL:
+	case token.MUL: // *
 		return z3.Multiply(lhs, rhs)
-	case token.QUO:
+	case token.QUO: // /
 		return z3.Divide(lhs, rhs)
 	}
 	panic("Unsupported binary operator")

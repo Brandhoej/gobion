@@ -1,4 +1,4 @@
-package symbolic
+package golang
 
 import (
 	"fmt"
@@ -9,16 +9,16 @@ import (
 )
 
 type GoScope struct {
-	depth      int
+	id         int
 	parent     *GoScope
 	symbols    symbolic.Symbols
 	valuations symbolic.Valuations
 	variables  symbolic.Variables
 }
 
-func NewGoGlobalScope() *GoScope {
+func NewGoGlobalScope(id int) *GoScope {
 	return &GoScope{
-		depth:      0,
+		id:         id,
 		parent:     nil,
 		symbols:    symbolic.NewSymbolsMap(),
 		valuations: symbolic.NewEnvironmentMap(),
@@ -30,9 +30,9 @@ func (scope *GoScope) Parent() *GoScope {
 	return scope.parent
 }
 
-func (scope *GoScope) Child() *GoScope {
+func (scope *GoScope) Child(id int) *GoScope {
 	return &GoScope{
-		depth:      scope.depth + 1,
+		id:         id,
 		parent:     scope,
 		symbols:    symbolic.NewSymbolsMap(),
 		valuations: symbolic.NewEnvironmentMap(),
@@ -95,7 +95,7 @@ func (scope *GoScope) Define(identifier string, sort *z3.Sort) (variable *z3.AST
 // Declares a variable with the valuation.
 func (scope *GoScope) Declare(identifier string, valuation *z3.AST) *z3.AST {
 	symbol := scope.symbols.Insert(identifier)
-	prefixedIdentifier := fmt.Sprintf("%s_%d", identifier, scope.depth)
+	prefixedIdentifier := fmt.Sprintf("%s_%d", identifier, scope.id)
 	variable := scope.variables.Declare(symbol, prefixedIdentifier, valuation.Sort())
 	scope.valuations.Store(symbol, valuation)
 	return variable

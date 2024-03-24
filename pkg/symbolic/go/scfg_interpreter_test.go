@@ -1,4 +1,4 @@
-package symbolic
+package golang
 
 import (
 	"go/ast"
@@ -7,63 +7,55 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
+	"github.com/Brandhoej/gobion/pkg/scfg/golang"
 )
 
-func Test1(t *testing.T) {
+func TestSCFG1(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	solver := context.NewSolver()
 	path := NewGoGlobalPath(context)
 	n := context.NewConstant(z3.WithName("n"), context.IntegerSort())
 	m := context.NewConstant(z3.WithName("m"), context.IntegerSort())
-	one := context.NewInt(1, context.IntegerSort())
-	expected := z3.Subtract(z3.Subtract(m, one), m)
+	path.scope.Declare("n", n)
+	path.scope.Declare("m", m)
 
 	source := `
 	package example
 
-	func Max(n, m int) int {
-		a := 0
-		a += 1
-		a += m
-		a = a - 1
-		a -= 1
-		if a < m {
-			return a - m
-		} else {
-			return n + m
+	func Max(n, m int) (int, int) {
+		if n < m {
+			return n - m, m
 		}
+		return n + m, n
 	}
 	`
 	fset := token.NewFileSet()
 	node, _ := parser.ParseFile(fset, "example", source, parser.ParseComments)
 	function := node.Decls[0].(*ast.FuncDecl)
+	scopes := golang.SCFG(function)
 
 	// Act
-	result := InterpretFunction(path, function, []*z3.AST{n, m})
+	_, outputs := InterpretSCFG(path, scopes, 2)
 
 	// Assert
-	equality := z3.Eq(result[0], expected)
-	if model := solver.Prove(equality); model != nil {
-		t.Error(equality.String(), "has solution", model.String())
-	}
+	t.Log(outputs[0].String())
+	t.Log(outputs[1].String())
+	t.FailNow()
 }
 
-func Test2(t *testing.T) {
+func TestSCFG2(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	solver := context.NewSolver()
 	path := NewGoGlobalPath(context)
-	expected := context.NewInt(2, context.IntegerSort())
 
 	source := `
 	package example
 
 	func Max() int {
 		sum := 0
-		for x := 0; x < 2; x++ {
+		for x := 0; x < 200; x++ {
 			sum += 1
 		}
 		return sum
@@ -72,13 +64,12 @@ func Test2(t *testing.T) {
 	fset := token.NewFileSet()
 	node, _ := parser.ParseFile(fset, "example", source, parser.ParseComments)
 	function := node.Decls[0].(*ast.FuncDecl)
+	scopes := golang.SCFG(function)
 
 	// Act
-	result := InterpretFunction(path, function, []*z3.AST{})
+	_, outputs := InterpretSCFG(path, scopes, 1)
 
 	// Assert
-	equality := z3.Eq(result[0], expected)
-	if model := solver.Prove(equality); model != nil {
-		t.Error(equality.String(), "has solution", model.String())
-	}
+	t.Log(outputs[0].String())
+	t.FailNow()
 }

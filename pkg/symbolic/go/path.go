@@ -1,4 +1,4 @@
-package symbolic
+package golang
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ type GoPath struct {
 func NewGoGlobalPath(context *z3.Context) *GoPath {
 	return &GoPath{
 		parent:  nil,
-		scope:   NewGoGlobalScope(),
+		scope:   NewGoGlobalScope(0),
 		context: context,
 		pc:      context.NewTrue(),
 	}
@@ -47,7 +47,7 @@ func (path *GoPath) Solver() *z3.Solver {
 
 func (path *GoPath) IsTautologhy() bool {
 	solver := path.Solver()
-	return solver.Prove(path.context.NewTrue()) == nil
+	return solver.Prove(z3.Eq(path.pc, path.context.NewTrue())) != nil
 }
 
 func (path *GoPath) IsFeasible() bool {
@@ -61,13 +61,13 @@ func (path *GoPath) IsInfeasible() bool {
 }
 
 func (path *GoPath) Enclose() *GoPath {
-	return path.Branch(path.pc)
+	return path.Branch(path.pc, path.scope.id+1)
 }
 
-func (path *GoPath) Branch(condition *z3.AST) *GoPath {
+func (path *GoPath) Branch(condition *z3.AST, scopeID int) *GoPath {
 	branch := &GoPath{
 		parent:     path,
-		scope:      path.scope.Child(),
+		scope:      path.scope.Child(scopeID),
 		context:    path.context,
 		pc:         z3.And(path.pc, condition).Simplify(),
 		terminated: path.terminated,

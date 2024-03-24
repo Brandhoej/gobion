@@ -1,4 +1,4 @@
-package symbolic
+package golang
 
 import (
 	"testing"
@@ -21,7 +21,7 @@ func TestSingleStaticAssignmentSingleVariable(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	scope := NewGoGlobalScope()
+	scope := NewGoGlobalScope(0)
 	sort := context.IntegerSort()
 	identifier := "x"
 
@@ -60,7 +60,7 @@ func TestSingleStaticAssignmentMultipleVariable(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	scope := NewGoGlobalScope()
+	scope := NewGoGlobalScope(0)
 	sort := context.IntegerSort()
 	xIdent, yIdent := "x", "y"
 
@@ -107,8 +107,8 @@ func TestVariableShadowing(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	outer := NewGoGlobalScope()
-	inner := outer.Child()
+	outer := NewGoGlobalScope(0)
+	inner := outer.Child(outer.id+1)
 	sort := context.IntegerSort()
 	xIdent := "x"
 
@@ -138,8 +138,8 @@ func TestIsLocal(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	outer := NewGoGlobalScope()
-	inner := outer.Child()
+	outer := NewGoGlobalScope(0)
+	inner := outer.Child(outer.id+1)
 	sort := context.IntegerSort()
 	xIdent, yIdent, zIdent := "x", "y", "z"
 
@@ -171,8 +171,8 @@ func TestAssign(t *testing.T) {
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
 	solver := context.NewSolver()
-	outer := NewGoGlobalScope()
-	inner := outer.Child()
+	outer := NewGoGlobalScope(0)
+	inner := outer.Child(outer.id+1)
 	sort := context.IntegerSort()
 	one := context.NewInt(1, sort)
 	xIdent := "x"
@@ -197,8 +197,8 @@ func TestVariable(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
-	outer := NewGoGlobalScope()
-	inner := outer.Child()
+	outer := NewGoGlobalScope(0)
+	inner := outer.Child(outer.id+1)
 	sort := context.IntegerSort()
 	xIdent, yIdent, zIdent := "x", "y", "z"
 
@@ -229,8 +229,8 @@ func TestValuation(t *testing.T) {
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
 	solver := context.NewSolver()
-	outer := NewGoGlobalScope()
-	inner := outer.Child()
+	outer := NewGoGlobalScope(0)
+	inner := outer.Child(outer.id+1)
 	sort := context.IntegerSort()
 	one := context.NewInt(1, sort)
 	two := context.NewInt(2, sort)
