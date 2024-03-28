@@ -231,8 +231,8 @@ func TestSwitch(t *testing.T) {
 	// b1: fallthrough label
 	cfg.Sequence(b1, i2)
 
-	cfg.JumpFrom(cb2, cfg.Exit())
-	cfg.JumpFrom(ci2, cfg.Exit())
+	cfg.JumpFrom(cb2, cfg.NewUnconditionalJump(cfg.Exit()))
+	cfg.JumpFrom(ci2, cfg.NewUnconditionalJump(cfg.Exit()))
 
 	// Act
 	var buffer bytes.Buffer

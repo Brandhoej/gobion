@@ -122,17 +122,17 @@ func (graph *Graph[S, E]) Sequence(source, destination int) {
 	graph.JumpTo(source, condition)
 }
 
-func (graph *Graph[S, E]) IfThenElse(condition int, consequence, alternative int) {
+func (graph *Graph[S, E]) IfThenElse(condition, consequence, alternative int) {
 	graph.JumpFrom(condition, consequence)
 	graph.JumpFrom(condition, alternative)
 }
 
-func (graph *Graph[S, E]) JumpFrom(condition int, jump int) {
-	a := graph.conditions[condition]
-	a.jumps = append(a.jumps, jump)
+func (graph *Graph[S, E]) JumpFrom(conditionID, jump int) {
+	condition := graph.conditions[conditionID]
+	condition.jumps = append(condition.jumps, jump)
 }
 
-func (graph *Graph[S, E]) JumpTo(source int, condition int) int {
+func (graph *Graph[S, E]) JumpTo(source, condition int) int {
 	block := graph.blocks[source]
 	block.condition = condition
 	return condition

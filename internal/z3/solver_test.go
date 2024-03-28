@@ -11,7 +11,8 @@ func TestPush(t *testing.T) {
 	config := NewConfig()
 	context := NewContext(config)
 	solver := context.NewSolver()
-	a, b := context.NewConstant(WithName("a"), context.BooleanSort()), context.NewConstant(WithName("b"), context.BooleanSort())
+	a := context.NewConstant(WithName("a"), context.BooleanSort())
+	b := context.NewConstant(WithName("b"), context.BooleanSort())
 
 	// Act
 	solver.Push()
@@ -21,4 +22,23 @@ func TestPush(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, "", solver.String())
+}
+
+func TestMultipleAssertions(t *testing.T) {
+	// Arrange
+	config := NewConfig()
+	context := NewContext(config)
+	solver := context.NewSolver()
+	a := context.NewConstant(WithName("a"), context.IntegerSort())
+	one := context.NewInt(1, context.IntegerSort())
+	two := context.NewInt(2, context.IntegerSort())
+	three := context.NewInt(3, context.IntegerSort())
+
+	// Act
+	solver.Assert(Eq(a, one))
+	solver.Assert(Eq(a, two))
+	solver.Assert(Eq(a, three))
+
+	// Assert
+	assert.False(t, solver.HasSolution())
 }

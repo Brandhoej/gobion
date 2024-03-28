@@ -57,6 +57,10 @@ func (context *Context) NewSolver() (solver *Solver) {
 	return solver
 }
 
+func (solver *Solver) Context() *Context {
+	return solver.context
+}
+
 func (solver *Solver) Assert(ast *AST) {
 	solver.context.do(func() {
 		C.Z3_solver_assert(solver.context.z3Context, solver.z3Sovler, ast.z3AST)
