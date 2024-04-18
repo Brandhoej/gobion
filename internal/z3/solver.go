@@ -138,9 +138,24 @@ func (solver *Solver) Prove(proposition *AST) *Model {
 	return nil
 }
 
+func (solver *Solver) Proven(proposition *AST) bool {
+	solver.Push()
+	defer solver.Pop(1)
+
+	contradiction := Not(proposition)
+	solver.Assert(contradiction)
+	return solver.Check().IsFalse()
+}
+
 func (solver *Solver) IsTautology(proposition *AST) *Model {
 	return solver.Prove(
 		Eq(proposition, solver.True()),
+	)
+}
+
+func (solver *Solver) IsContradiction(proposition *AST) *Model {
+	return solver.Prove(
+		Eq(proposition, solver.False()),
 	)
 }
 

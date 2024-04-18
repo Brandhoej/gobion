@@ -61,8 +61,8 @@ func (ast *AST) Substitute(from, to []*AST) *AST {
 	length := len(from)
 	context := ast.context
 
-	cFrom := make([]C.Z3_ast, 0, length)
-	cTo := make([]C.Z3_ast, 0, length)
+	cFrom := make([]C.Z3_ast, length)
+	cTo := make([]C.Z3_ast, length)
 
 	for idx := range from {
 		cFrom[idx] = from[idx].z3AST

@@ -41,7 +41,7 @@ func TestTransitivity(t *testing.T) {
 	assert.True(t, sat.IsFalse(), "conjecture must be unsatisfiable")
 }
 
-func TestDemorganProof(t *testing.T) {
+func TestDemorganProve(t *testing.T) {
 	// Arrange
 	config := NewConfig()
 	context := NewContext(config)

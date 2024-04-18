@@ -19,6 +19,16 @@ func (sort *Sort) AST() *AST {
 	)
 }
 
+func (sort *Sort) Zero() (zero *AST) {
+	switch sort.Kind() {
+	case KindInt:
+		zero = sort.context.NewInt(0, sort)
+	case KindBoolean:
+		zero = sort.context.NewFalse()
+	}
+	return zero
+}
+
 func (sort *Sort) Context() *Context {
 	return sort.context
 }

@@ -13,32 +13,47 @@ type GoExpressionInterpreter struct {
 	context *z3.Context
 }
 
-func (interpreter *GoExpressionInterpreter) Expression(scope symbolic.Scope, expression ast.Expr) *z3.AST {
+func NewExpressionsInterpreter(context *z3.Context) *GoExpressionInterpreter {
+	return &GoExpressionInterpreter{
+		context: context,
+	}
+}
+
+func (interpreter *GoExpressionInterpreter) Interpret(
+	scope symbolic.Scope, expression ast.Expr, reduced bool,
+) *z3.AST {
+	if expression == nil {
+		return nil
+	}
+	return interpreter.Expression(scope, reduced, expression)
+}
+
+func (interpreter *GoExpressionInterpreter) Expression(scope symbolic.Scope, valuation bool, expression ast.Expr) *z3.AST {
 	switch cast := any(expression).(type) {
 	case *ast.BinaryExpr:
-		return interpreter.Binary(scope, cast)
+		return interpreter.Binary(scope, valuation, cast)
 	case *ast.UnaryExpr:
-		return interpreter.Unary(scope, cast)
+		return interpreter.Unary(scope, valuation, cast)
 	case *ast.ParenExpr:
-		return interpreter.Parenthesis(scope, cast)
+		return interpreter.Parenthesis(scope, valuation, cast)
 	case *ast.BasicLit:
 		return interpreter.Literal(scope, cast)
 	case *ast.Ident:
-		return interpreter.Identifier(scope, cast)
+		return interpreter.Identifier(scope, valuation, cast)
 	}
 	panic("Unsupported expression type")
 }
 
-func (interpreter *GoExpressionInterpreter) Binary(scope symbolic.Scope, binary *ast.BinaryExpr) *z3.AST {
-	lhs := interpreter.Expression(scope, binary.X)
-	rhs := interpreter.Expression(scope, binary.Y)
+func (interpreter *GoExpressionInterpreter) Binary(scope symbolic.Scope, valuation bool, binary *ast.BinaryExpr) *z3.AST {
+	lhs := interpreter.Expression(scope, valuation, binary.X)
+	rhs := interpreter.Expression(scope, valuation, binary.Y)
 	switch binary.Op {
 	// Logical operators on booleans.
 	case token.LAND: // &&
 		return z3.And(lhs, rhs)
-	case token.LOR: // ||
+	case token.LOR:  // ||
 		return z3.Or(lhs, rhs)
-	case token.XOR: // ^
+	case token.XOR:  // ^
 		return z3.Xor(lhs, rhs)
 
 	// Relational operators.
@@ -67,12 +82,12 @@ func (interpreter *GoExpressionInterpreter) Binary(scope symbolic.Scope, binary 
 	panic("Unsupported binary operator")
 }
 
-func (interpreter *GoExpressionInterpreter) Parenthesis(scope symbolic.Scope, parenthesis *ast.ParenExpr) *z3.AST {
-	return interpreter.Expression(scope, parenthesis.X)
+func (interpreter *GoExpressionInterpreter) Parenthesis(scope symbolic.Scope, valuation bool, parenthesis *ast.ParenExpr) *z3.AST {
+	return interpreter.Expression(scope, valuation, parenthesis.X)
 }
 
-func (interpreter *GoExpressionInterpreter) Unary(scope symbolic.Scope, unary *ast.UnaryExpr) *z3.AST {
-	operand := interpreter.Expression(scope, unary.X)
+func (interpreter *GoExpressionInterpreter) Unary(scope symbolic.Scope, valuation bool, unary *ast.UnaryExpr) *z3.AST {
+	operand := interpreter.Expression(scope, valuation, unary.X)
 	switch unary.Op {
 	case token.NOT:
 		return z3.Not(operand)
@@ -92,17 +107,21 @@ func (interpreter *GoExpressionInterpreter) Literal(scope symbolic.Scope, litera
 	panic("Unsupported literal type")
 }
 
-func (interpreter *GoExpressionInterpreter) Identifier(scope symbolic.Scope, identifier *ast.Ident) *z3.AST {
+func (interpreter *GoExpressionInterpreter) Identifier(scope symbolic.Scope, valuation bool, identifier *ast.Ident) *z3.AST {
 	switch identifier.Name {
 	case "true":
 		return interpreter.context.NewTrue()
 	case "false":
 		return interpreter.context.NewFalse()
 	default:
-		valuation, exists := scope.Valuation(identifier.Name)
-		if !exists {
-			panic("Symbol does not have a valuation")
+		symbol, encasing := scope.Lookup(identifier.Name)
+		if encasing == nil {
+			panic("There is no symbol for the identifier")
 		}
-		return valuation
+		if valuation {
+			return scope.Valuation(symbol)
+		} else {
+			return scope.Variable(symbol)
+		}
 	}
 }

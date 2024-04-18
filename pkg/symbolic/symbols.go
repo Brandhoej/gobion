@@ -1,56 +1,49 @@
 package symbolic
 
+import "github.com/Brandhoej/gobion/internal/z3"
+
 type Symbol int32
 
+func (symbol Symbol) Z3(context *z3.Context) z3.Symbol {
+	return context.NewIntegerSymbol(int(symbol))
+}
+
 type Symbols interface {
-	Insert(identifier string) Symbol
-	Lookup(identifier string) (Symbol, bool)
-	Identifiers() []string
-	Symbols() []Symbol
+	Insert(identifier string) (symbol Symbol)
+	Lookup(identifier string) (symbol Symbol, exists bool)
+	Identifier(symbol Symbol) (identifier string, exists bool)
 }
 
 type SymbolsMap struct {
-	identifiers map[string]Symbol
+	factory     *SymbolsFactory
 	symbols     map[Symbol]string
+	identifiers map[string]Symbol
 }
 
-func NewSymbolsMap() *SymbolsMap {
+func NewSymbolsMap(factory *SymbolsFactory) *SymbolsMap {
 	return &SymbolsMap{
-		identifiers: map[string]Symbol{},
+		factory:     factory,
 		symbols:     map[Symbol]string{},
+		identifiers: map[string]Symbol{},
 	}
 }
 
-func (mapping *SymbolsMap) Next() Symbol {
-	return Symbol(len(mapping.identifiers))
-}
-
-func (mapping *SymbolsMap) Insert(identifier string) Symbol {
+func (mapping *SymbolsMap) Insert(identifier string) (symbol Symbol) {
 	if symbol, exists := mapping.identifiers[identifier]; exists {
 		return symbol
 	}
-	symbol := mapping.Next()
+	symbol = mapping.factory.Next()
+	mapping.symbols[symbol] = identifier
 	mapping.identifiers[identifier] = symbol
 	return symbol
 }
 
-func (mapping *SymbolsMap) Lookup(identifier string) (Symbol, bool) {
-	symbol, exists := mapping.identifiers[identifier]
+func (mapping *SymbolsMap) Lookup(identifier string) (symbol Symbol, exists bool) {
+	symbol, exists = mapping.identifiers[identifier]
 	return symbol, exists
 }
 
-func (mapping *SymbolsMap) Identifiers() []string {
-	identifiers := make([]string, 0, len(mapping.identifiers))
-	for identifier := range mapping.identifiers {
-		identifiers = append(identifiers, identifier)
-	}
-	return identifiers
-}
-
-func (mapping *SymbolsMap) Symbols() []Symbol {
-	symbols := make([]Symbol, 0, len(mapping.identifiers))
-	for _, symbol := range mapping.identifiers {
-		symbols = append(symbols, symbol)
-	}
-	return symbols
+func (mapping *SymbolsMap) Identifier(symbol Symbol) (identifier string, exists bool) {
+	identifier, exists = mapping.symbols[symbol] 
+	return identifier, exists
 }

@@ -8,9 +8,44 @@ import (
 
 	"github.com/Brandhoej/gobion/internal/z3"
 	"github.com/Brandhoej/gobion/pkg/scfg/golang"
+	"github.com/Brandhoej/gobion/pkg/symbolic"
 )
 
 func TestSCFG1(t *testing.T) {
+	// Arrange
+	config := z3.NewConfig()
+	context := z3.NewContext(config)
+	path := symbolic.NewGlobalPath(symbolic.NewLexicalScope(context), context.NewTrue())
+
+	source := `
+	package example
+
+	func Max() int {
+		sum := 0
+		for x := 0; x < 200; x++ {
+			sum += 1
+		}
+		return sum
+	}`
+	fset := token.NewFileSet()
+	node, _ := parser.ParseFile(fset, "example", source, parser.ParseComments)
+	function := node.Decls[0].(*ast.FuncDecl)
+	scopes := golang.SCFG(function)
+	interpreter := symbolic.NewSCFG(
+		context, *scopes,
+		NewStatementInterpreter(context),
+		NewExpressionsInterpreter(context),
+	)
+
+	// Act
+	_, outputs := interpreter.Interpret(path)
+
+	// Assert
+	t.Log(outputs[0].String())
+	t.FailNow()
+}
+
+/*func TestSCFG1(t *testing.T) {
 	// Arrange
 	config := z3.NewConfig()
 	context := z3.NewContext(config)
@@ -101,3 +136,4 @@ func BenchmarkSCFGInterpretationOfForLoop(b *testing.B) {
 		InterpretSCFG(path, scopes, 1)
 	}
 }
+*/

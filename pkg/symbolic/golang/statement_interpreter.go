@@ -5,101 +5,114 @@ import (
 	"go/token"
 
 	"github.com/Brandhoej/gobion/internal/z3"
+	"github.com/Brandhoej/gobion/pkg/symbolic"
 )
 
 type GoStatementInterpreter struct {
 	context     *z3.Context
 	sorts       *GoSortInterpreter
 	expressions *GoExpressionInterpreter
-	outputs     []*z3.AST
 }
 
-func NewGoStatementInterpreter(context *z3.Context) *GoStatementInterpreter {
+func NewStatementInterpreter(context *z3.Context) *GoStatementInterpreter {
 	return &GoStatementInterpreter{
-		context: context,
-		sorts: &GoSortInterpreter{
-			context: context,
-		},
-		expressions: &GoExpressionInterpreter{
-			context: context,
-		},
+		context:     context,
+		sorts:       NewSortInterpreter(context),
+		expressions: NewExpressionsInterpreter(context),
 	}
 }
 
-func (interpreter *GoStatementInterpreter) statement(path *GoPath, statement ast.Stmt) *GoPath {
+func (interpreter *GoStatementInterpreter) Interpret(
+	scope symbolic.Scope, statements []ast.Stmt,
+) (outputs []*z3.AST) {
+	for idx := range statements {
+		outputs = interpreter.statement(
+			scope, statements[idx],
+		)
+	}
+	return outputs
+}
+
+func (interpreter *GoStatementInterpreter) statement(
+	scope symbolic.Scope, statement ast.Stmt,
+) (outputs []*z3.AST) {
 	switch cast := any(statement).(type) {
 	case *ast.AssignStmt:
-		return interpreter.assignment(path, cast)
+		return interpreter.assignment(scope, cast)
 	case *ast.IncDecStmt:
-		return interpreter.incrementDecrement(path, cast)
+		return interpreter.incrementDecrement(scope, cast)
 	case *ast.ReturnStmt:
-		return interpreter.returnTermination(path, cast)
+		return interpreter.returnTermination(scope, cast)
 	}
 	panic("Unsupported statement")
 }
 
-func (interpreter *GoStatementInterpreter) incrementDecrement(path *GoPath, incDec *ast.IncDecStmt) *GoPath {
+func (interpreter *GoStatementInterpreter) incrementDecrement(
+	scope symbolic.Scope, incDec *ast.IncDecStmt,
+) (outputs []*z3.AST) {
 	one := interpreter.context.NewInt(1, interpreter.context.IntegerSort())
 	identifier := incDec.X.(*ast.Ident).Name
-	valuation, _ := path.scope.Valuation(identifier)
+	symbol, _ := scope.Lookup(identifier)
+	valuation := scope.Valuation(symbol)
 
 	if incDec.Tok == token.INC {
-		path.scope.Assign(identifier, z3.Add(valuation, one))
+		scope.Assign(symbol, z3.Add(valuation, one))
 	} else {
-		path.scope.Assign(identifier, z3.Subtract(valuation, one))
+		scope.Assign(symbol, z3.Subtract(valuation, one))
 	}
 
-	return path
+	return outputs
 }
 
-func (interpreter *GoStatementInterpreter) assignment(path *GoPath, assignment *ast.AssignStmt) *GoPath {
+func (interpreter *GoStatementInterpreter) assignment(
+	scope symbolic.Scope, assignment *ast.AssignStmt,
+) (outputs []*z3.AST) {
 	for idx := range assignment.Lhs {
 		identifier := assignment.Lhs[idx].(*ast.Ident).Name
-		value := interpreter.expressions.Expression(path.scope, assignment.Rhs[idx]).Simplify()
+		value := interpreter.expressions.Expression(scope, true, assignment.Rhs[idx]).Simplify()
 		switch assignment.Tok {
 		case token.ASSIGN: // =
-			path.scope.Assign(identifier, value)
+			symbol, _ := scope.Lookup(identifier)
+			scope.Assign(symbol, value)
 		case token.DEFINE: // :=
-			path.scope.Declare(identifier, value)
+			symbol := scope.Bind(identifier)
+			scope.Declare(symbol, value)
 		case token.ADD_ASSIGN: // +=
-			valuation, _ := path.scope.Valuation(identifier)
-			path.scope.Assign(identifier, z3.Add(valuation, value))
+			symbol, _ := scope.Lookup(identifier)
+			valuation := scope.Valuation(symbol)
+			scope.Assign(symbol, z3.Add(valuation, value))
 		case token.SUB_ASSIGN: // -=
-			valuation, _ := path.scope.Valuation(identifier)
-			path.scope.Assign(identifier, z3.Subtract(valuation, value))
+			symbol, _ := scope.Lookup(identifier)
+			valuation := scope.Valuation(symbol)
+			scope.Assign(symbol, z3.Subtract(valuation, value))
 		case token.MUL_ASSIGN: //*=
-			valuation, _ := path.scope.Valuation(identifier)
-			path.scope.Assign(identifier, z3.Multiply(valuation, value))
+			symbol, _ := scope.Lookup(identifier)
+			valuation := scope.Valuation(symbol)
+			scope.Assign(symbol, z3.Multiply(valuation, value))
 		case token.QUO_ASSIGN: // /=
-			valuation, _ := path.scope.Valuation(identifier)
-			path.scope.Assign(identifier, z3.Divide(valuation, value))
+			symbol, _ := scope.Lookup(identifier)
+			valuation := scope.Valuation(symbol)
+			scope.Assign(symbol, z3.Divide(valuation, value))
 		case token.REM_ASSIGN: // %=
-			valuation, _ := path.scope.Valuation(identifier)
-			path.scope.Assign(identifier, z3.Remaninder(valuation, value))
+			symbol, _ := scope.Lookup(identifier)
+			valuation := scope.Valuation(symbol)
+			scope.Assign(symbol, z3.Remaninder(valuation, value))
 		}
 	}
 
-	return path
+	return outputs
 }
 
-func (interpreter *GoStatementInterpreter) returnTermination(path *GoPath, returnStatement *ast.ReturnStmt) *GoPath {
+func (interpreter *GoStatementInterpreter) returnTermination(
+	scope symbolic.Scope, returnStatement *ast.ReturnStmt,
+) (outputs []*z3.AST) {
+	outputs = make([]*z3.AST, len(returnStatement.Results))
 	for idx := range returnStatement.Results {
 		valuation := interpreter.expressions.Expression(
-			path.scope, returnStatement.Results[idx],
+			scope, true, returnStatement.Results[idx],
 		)
-
-		// If we encounter a return statement with a tautologhical PC. Then that is return value of all possible paths.
-		// Otherwise, the program has atleast one branch and therefore the return value is a result of some constraints.
-		// In the cases where we have multiple returns in seperate branches then the output is a if-then-else.
-		// More formally but still informal: "if pc then return valuation else return existing output".
-		if interpreter.outputs[idx] == nil || path.IsTautologhy() {
-			interpreter.outputs[idx] = valuation.Simplify()
-		} else {
-			interpreter.outputs[idx] = z3.ITE(
-				path.pc, valuation, interpreter.outputs[idx],
-			).Simplify()
-		}
+		outputs[idx] = valuation
 	}
 
-	return path
+	return outputs
 }

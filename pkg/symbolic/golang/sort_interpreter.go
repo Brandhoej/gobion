@@ -11,6 +11,12 @@ type GoSortInterpreter struct {
 	context *z3.Context
 }
 
+func NewSortInterpreter(context *z3.Context) *GoSortInterpreter {
+	return &GoSortInterpreter{
+		context: context,
+	}
+}
+
 func (interpreter *GoSortInterpreter) Expression(expression ast.Expr) *z3.Sort {
 	switch cast := any(expression).(type) {
 	case *ast.Ident:
