@@ -1,6 +1,9 @@
 package automata
 
-import "github.com/Brandhoej/gobion/pkg/graph"
+import (
+	"github.com/Brandhoej/gobion/pkg/automata/language"
+	"github.com/Brandhoej/gobion/pkg/graph"
+)
 
 type EdgeDirection bool
 
@@ -30,11 +33,12 @@ func (edge Edge) Destination() graph.Key {
 	return edge.destination
 }
 
-func (edge Edge) IsEnabled(variables Variables, state State) bool {
-	return edge.guard.IsSatisfiable(variables, state.valuations)
+func (edge Edge) IsEnabled(solver Solver) bool {
+	return edge.guard.IsSatisfiable(solver)
 }
 
-func (edge Edge) Traverse(variables Variables, state State, forward bool) State {
-	valuations := edge.update.Apply(variables, state.valuations, forward)
-	return NewState(edge.destination, valuations)
+func (edge Edge) Traverse(variables language.Variables, state State) State {
+	/*valuations := edge.update.Apply(variables, state.valuations)
+	return NewState(edge.destination, valuations)*/
+	panic("Not implemented yet")
 }

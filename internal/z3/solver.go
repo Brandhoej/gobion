@@ -159,6 +159,13 @@ func (solver *Solver) IsContradiction(proposition *AST) *Model {
 	)
 }
 
+func (solver *Solver) HasSolutionFor(proposition *AST) bool {
+	solver.Push()
+	defer solver.Pop(1)
+	solver.Assert(proposition)
+	return solver.Check().IsTrue()
+}
+
 func (solver *Solver) HasSolution() bool {
 	return solver.Check().IsTrue()
 }

@@ -12,6 +12,6 @@ func NewLocation(name string, invariant Invariant) Location {
 	}
 }
 
-func (location Location) IsEnabled(variables Variables, valuations Valuations) bool {
-	return location.invariant.IsSatisfiable(variables, valuations)
+func (location Location) IsEnabled(solver Solver) bool {
+	return location.invariant.IsSatisfiable(solver)
 }

@@ -31,7 +31,7 @@ func (set StateSet) Insert(state State) {
 func (set StateSet) Contains(target State) bool {
 	if states, exists := set.states[target.location]; exists {
 		for _, state := range states {
-			if target.valuations.SubsetOf(state.valuations) {
+			if target.SubsetOf(state) {
 				return true
 			}
 		}

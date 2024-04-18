@@ -4,43 +4,57 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 func Test_IsSatisfiable(t *testing.T) {
 	// Arrange
-	context := z3.NewContext(z3.NewConfig())
 	symbols := symbols.NewSymbolsMap[string](
 		symbols.NewSymbolsFactory(),
 	)
 
-	one := context.NewInt(1, context.IntegerSort())
-	two := context.NewInt(2, context.IntegerSort())
-	three := context.NewInt(2, context.IntegerSort())
-
-	variables := NewVariablesMap(context)
-	x := symbols.Insert("x")
-	y := symbols.Insert("y")
-	xVar := variables.Declare(x, context.IntegerSort())
-	yVar := variables.Declare(y, context.IntegerSort())
+	variables := language.NewVariablesMap()
+	x := variables.Declare(symbols.Insert("x"), language.IntegerSort)
+	y := variables.Declare(symbols.Insert("y"), language.IntegerSort)
 
 	guard := NewGuard(
-		context,
-		NewConjunction(
-			newEquality(xVar, EQ, two),
-			NewDisjunction(
-				newEquality(yVar, LE, one),
-				newEquality(yVar, GE, three),
+		language.Conjunction(
+			language.NewBinary(
+				x,
+				language.Equal,
+				language.NewInteger(2),
+			),
+			language.Disjunction(
+				language.NewBinary(
+					y,
+					language.LessThanEqual,
+					language.NewInteger(1),
+				),
+				language.NewBinary(
+					y,
+					language.GreaterThanEqual,
+					language.NewInteger(3),
+				),
 			),
 		),
 	)
 
-	valuations := NewValuationsMap(context)
-	valuations.Assign(x, two, LE) // x <= 2
-	valuations.Assign(y, one, EQ) // y = 1
+	valuations := language.NewValuationsMap()
+	valuations.Assign(
+		x.Symbol(),
+		language.NewInteger(2),
+	) // x = 2
+	valuations.Assign(
+		y.Symbol(),
+		language.NewInteger(3),
+	) // y = 1
+
+	context := z3.NewContext(z3.NewConfig())
+	solver := newSolver(context.NewSolver(), variables, valuations)
 
 	// Act
-	satisfiable := guard.IsSatisfiable(variables, valuations)
+	satisfiable := guard.IsSatisfiable(solver)
 
 	// Assert
 	t.Log(satisfiable)

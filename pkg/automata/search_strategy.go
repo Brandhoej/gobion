@@ -25,7 +25,7 @@ func (search BreadthFirstSearch) successors() func(node State) []State {
 	if search.forward {
 		return search.system.Outgoing
 	}
-	return search.system.Ingoing
+	panic("Backward reachability successors not implemented yet")
 }
 
 func (search BreadthFirstSearch) For(yield func(state State) bool, roots ...State) Trace {
@@ -65,7 +65,7 @@ func (search DepthFirstSearch) successors() func(node State) []State {
 	if search.forward {
 		return search.system.Outgoing
 	}
-	return search.system.Ingoing
+	panic("Backward reachability successors not implemented yet")
 }
 
 func (search DepthFirstSearch) For(yield func(state State) bool, roots ...State) Trace {

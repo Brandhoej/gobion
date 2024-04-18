@@ -4,36 +4,34 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 func Test_Apply(t *testing.T) {
 	// Arrange
-	context := z3.NewContext(z3.NewConfig())
 	symbols := symbols.NewSymbolsMap[string](
 		symbols.NewSymbolsFactory(),
 	)
+	variables := language.NewVariablesMap()
+	x := variables.Declare(symbols.Insert("x"), language.IntegerSort)
+	y := variables.Declare(symbols.Insert("y"), language.IntegerSort)
 
-	one := context.NewInt(1, context.IntegerSort())
-	two := context.NewInt(2, context.IntegerSort())
+	update := NewUpdate(
+		language.NewAssignment(x, language.NewInteger(1)),
+	)
+
+	before := language.NewValuationsMap()
+	before.Assign(x.Symbol(), language.NewInteger(0))
+	before.Assign(y.Symbol(), language.NewInteger(0))
 	
-	variables := NewVariablesMap(context)
-	x := symbols.Insert("x")
-	y := symbols.Insert("y")
-	xVar := variables.Declare(x, context.IntegerSort())
-	yVar := variables.Declare(y, context.IntegerSort())
+	context := z3.NewContext(z3.NewConfig())
+	statements := language.NewSymbolicStatementInterpreter(context, before)
 
-	update := NewUpdate(context, NewAssignment(x, LE, z3.Add(two, yVar)))
-
-	before := NewValuationsMap(context)
-	before.Assign(x, one, EQ)
-	before.Assign(y, two, EQ)
-	
 	// Act
-	after := update.Apply(variables, before, true)
+	after := update.Apply(statements, before)
 
 	// Assert
-	a, _ := after.Value(x)
-	t.Log(a.relation.ast(xVar, a.ast))
+	t.Log(after)
 	t.FailNow()
 }

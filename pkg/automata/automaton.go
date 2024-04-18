@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/Brandhoej/gobion/internal/z3"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/graph"
 )
 
@@ -43,7 +44,7 @@ func (automaton *Automaton) Ingoing(location graph.Key) (edges []Edge) {
 	return automaton.graph.To(location)
 }
 
-func (automaton *Automaton) Complete(variables Variables, complete func(graph.Key, Guard) graph.Key) {
+func (automaton *Automaton) Complete(variables language.Variables, complete func(graph.Key, Guard) graph.Key) {
 	automaton.Locations(func(source graph.Key, location Location) bool {
 		// The disjunction is the disjunction of all guards.
 		var disjunction Guard
@@ -59,18 +60,18 @@ func (automaton *Automaton) Complete(variables Variables, complete func(graph.Ke
 			}
 		} else {
 			// If there are not outgoing edges then we assume a false edge.
-			disjunction = NewGuard(automaton.context, NewFalse(automaton.context))
+			disjunction = NewGuard(language.NewFalse())
 		}
 
 		// Constrain by the location's invariant.
-		invariant := NewGuard(automaton.context, location.invariant.condition)
+		invariant := NewGuard(location.invariant.condition)
 		missing := disjunction.Negation().Conjunction(invariant)
 
 		// If the negation of all didisjunctionsjoined edge guards constrained by the invariant
 		// still has a solution then we have a "missing" edge to the completion destination.
-		if missing.IsSAT(variables) {
+		if missing.IsSatisfiable(newSolver(nil, nil, nil)) {
 			destination := complete(source, missing)
-			update := NewUpdate(missing.context)
+			update := NewUpdate()
 			edge := NewEdge(source, missing, update, destination)
 			automaton.graph.AddEdge(edge)
 		}
