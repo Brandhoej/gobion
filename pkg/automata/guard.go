@@ -1,48 +1,62 @@
 package automata
 
-import "github.com/Brandhoej/gobion/pkg/automata/language"
+import (
+	"bytes"
+
+	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/symbols"
+)
 
 type Guard struct {
-	condition language.Expression
+	constraint constraints.Constraint
 }
 
-func NewGuard(condition language.Expression) Guard {
+func NewGuard(constraint constraints.Constraint) Guard {
 	return Guard{
-		condition: condition,
+		constraint: constraint,
 	}
+}
+
+func NewTrueGuard() Guard {
+	return NewGuard(constraints.NewTrue())
+}
+
+func NewFalseGuard() Guard {
+	return NewGuard(constraints.NewFalse())
 }
 
 // Finds the union of all variables and adds conjunctive terms
 func (guard Guard) Conjunction(guards ...Guard) Guard {
-	conditions := make([]language.Expression, len(guards))
+	conditions := make([]constraints.Constraint, len(guards))
 	for idx := range guards {
-		conditions[idx] = guards[idx].condition
+		conditions[idx] = guards[idx].constraint
 	}
-	conjunction := language.Conjunction(guard.condition, conditions...)
+	conjunction := constraints.Conjunction(guard.constraint, conditions...)
 	return NewGuard(conjunction)
 }
 
 // Finds the intersection of all variables and adds a disjunction term to them.
 func (guard Guard) Disjunction(guards ...Guard) Guard {
-	conditions := make([]language.Expression, len(guards))
+	conditions := make([]constraints.Constraint, len(guards))
 	for idx := range guards {
-		conditions[idx] = guards[idx].condition
+		conditions[idx] = guards[idx].constraint
 	}
-	conjunction := language.Disjunction(guard.condition, conditions...)
-	return NewGuard(conjunction)
+	disjunction := constraints.Disjunction(guard.constraint, conditions...)
+	return NewGuard(disjunction)
 }
 
 func (guard Guard) Negation() Guard {
-	negation := language.LogicalNegate(guard.condition)
+	negation := constraints.LogicalNegate(guard.constraint)
 	return NewGuard(negation)
 }
 
-func (guard Guard) IsSatisfiable(solver Solver) bool {
-	return solver.HasSolutionFor(guard.condition)
+func (guard Guard) IsSatisfiable(solver *ConstraintSolver) bool {
+	return solver.HasSolutionFor(guard.constraint)
 }
 
-func (guard Guard) String() string {
-	printer := language.NewPrettyPrinter()
-	printer.Expression(guard.condition)
-	return printer.String()
+func (guard Guard) String(symbols symbols.Store[any]) string {
+	var buffer bytes.Buffer
+	printer := constraints.NewPrettyPrinter(&buffer, symbols)
+	printer.Constraint(guard.constraint)
+	return buffer.String()
 }

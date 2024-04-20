@@ -1,34 +1,35 @@
 package automata
 
-import "github.com/Brandhoej/gobion/pkg/automata/language"
+import (
+	"bytes"
+
+	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/symbols"
+)
 
 type Update struct {
-	assignments []language.Assignment
+	constraint constraints.Constraint
 }
 
-func NewUpdate(assignments ...language.Assignment) Update {
+func NewUpdate(constraint constraints.Constraint) Update {
 	return Update{
-		assignments: assignments,
+		constraint: constraint,
 	}
 }
 
-func (update Update) Apply(
-	interpreter language.SymbolicStatementInterpreter, valuations language.Valuations,
-) language.Valuations {
-	copy := valuations.Copy()
-	for idx := range update.assignments {
-		interpreter.Assignment(update.assignments[idx])
+func NewEmptyUpdate() Update {
+	return Update{
+		constraint: constraints.NewTrue(),
 	}
-	return copy
 }
 
-func (update Update) String() string {
-	printer := language.NewPrettyPrinter()
-	for idx := range update.assignments {
-		if idx > 0 {
-			printer.Write(" ")
-		}
-		printer.Statement(update.assignments[idx])
-	}
-	return printer.String()
+func (update Update) Apply(solver *ConstraintSolver) {
+	solver.Assert(update.constraint)
+}
+
+func (update Update) String(symbols symbols.Store[any]) string {
+	var buffer bytes.Buffer
+	printer := constraints.NewPrettyPrinter(&buffer, symbols)
+	printer.Constraint(update.constraint)
+	return buffer.String()
 }

@@ -6,32 +6,34 @@ type StateSet struct {
 	states map[graph.Key][]State
 }
 
-func NewStateSet(states ...State) StateSet {
-	set := StateSet{
+func NewStateSet() StateSet {
+	return StateSet{
 		states: make(map[graph.Key][]State),
 	}
-	for _, state := range states {
-		set.Insert(state)
-	}
-	return set
 }
 
-func (set StateSet) Insert(state State) {
-	if states, exists := set.states[state.location]; exists {
-		if set.Contains(state) {
-			return
+func (set StateSet) Insert(solver ConstraintSolver, states ...State) (counter int) {
+	for _, state := range states {
+		if states, exists := set.states[state.location]; exists {
+			if set.Contains(state, solver) {
+				return
+			}
+	
+			set.states[state.location] = append(states, state)
+		} else {
+			set.states[state.location] = []State{state}
 		}
 
-		set.states[state.location] = append(states, state)
-	} else {
-		set.states[state.location] = []State{state}
+		counter += 1
 	}
+
+	return counter
 }
 
-func (set StateSet) Contains(target State) bool {
+func (set StateSet) Contains(target State, solver ConstraintSolver) bool {
 	if states, exists := set.states[target.location]; exists {
 		for _, state := range states {
-			if target.SubsetOf(state) {
+			if target.SubsetOf(state, solver) {
 				return true
 			}
 		}

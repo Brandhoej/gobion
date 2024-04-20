@@ -10,34 +10,28 @@ type SearchStrategy interface {
 }
 
 type BreadthFirstSearch struct {
-	system  *TransitionSystem
-	forward bool
+	system *TransitionSystem
+	solver ConstraintSolver
 }
 
-func NewBreadthFirstSearch(system *TransitionSystem, forward bool) BreadthFirstSearch {
+func NewBreadthFirstSearch(system *TransitionSystem, solver ConstraintSolver) BreadthFirstSearch {
 	return BreadthFirstSearch{
 		system:  system,
-		forward: forward,
+		solver: solver,
 	}
-}
-
-func (search BreadthFirstSearch) successors() func(node State) []State {
-	if search.forward {
-		return search.system.Outgoing
-	}
-	panic("Backward reachability successors not implemented yet")
 }
 
 func (search BreadthFirstSearch) For(yield func(state State) bool, roots ...State) Trace {
 	var terminal structures.LinkedNode[State]
-	states := NewStateSet(roots...)
+	states := NewStateSet()
+	states.Insert(search.solver, roots...)
 	algorithms.BFS(
-		search.successors(),
+		search.system.Outgoing,
 		func(state State) bool {
-			return states.Contains(state)
+			return states.Contains(state, search.solver)
 		},
 		func(node structures.LinkedNode[State]) bool {
-			states.Insert(node.Data)
+			states.Insert(search.solver, node.Data)
 			stop := yield(node.Data)
 			if stop {
 				terminal = node
@@ -50,34 +44,28 @@ func (search BreadthFirstSearch) For(yield func(state State) bool, roots ...Stat
 }
 
 type DepthFirstSearch struct {
-	system  *TransitionSystem
-	forward bool
+	system *TransitionSystem
+	solver ConstraintSolver
 }
 
-func NewDepthFirstSearch(system *TransitionSystem, forward bool) DepthFirstSearch {
+func NewDepthFirstSearch(system *TransitionSystem, solver ConstraintSolver) DepthFirstSearch {
 	return DepthFirstSearch{
 		system:  system,
-		forward: forward,
+		solver: solver,
 	}
-}
-
-func (search DepthFirstSearch) successors() func(node State) []State {
-	if search.forward {
-		return search.system.Outgoing
-	}
-	panic("Backward reachability successors not implemented yet")
 }
 
 func (search DepthFirstSearch) For(yield func(state State) bool, roots ...State) Trace {
 	var terminal structures.LinkedNode[State]
-	states := NewStateSet(roots...)
+	states := NewStateSet()
+	states.Insert(search.solver, roots...)
 	algorithms.DFS(
-		search.successors(),
+		search.system.Outgoing,
 		func(state State) bool {
-			return states.Contains(state)
+			return states.Contains(state, search.solver)
 		},
 		func(node structures.LinkedNode[State]) bool {
-			states.Insert(node.Data)
+			states.Insert(search.solver, node.Data)
 			stop := yield(node.Data)
 			if stop {
 				terminal = node

@@ -5,7 +5,7 @@ type Symbol int
 type Store[T any] interface {
 	Insert(item T) (symbol Symbol)
 	Lookup(item T) (symbol Symbol, exists bool)
-	Item(symbol Symbol) (identifier T, exists bool)
+	Item(symbol Symbol) (name T, exists bool)
 }
 
 type SymbolsMap[T comparable] struct {

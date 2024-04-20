@@ -1,21 +1,20 @@
 package automata
 
-import "github.com/Brandhoej/gobion/pkg/automata/language"
-
 type TransitionSystem struct {
-	variables language.Variables
+	solver *ConstraintSolver
 	automaton *Automaton
 }
 
-func NewTransitionSystem(variable language.Variables, automaton *Automaton) *TransitionSystem {
+func NewTransitionSystem(automaton *Automaton) *TransitionSystem {
 	return &TransitionSystem{
-		variables: variable,
 		automaton: automaton,
 	}
 }
 
-func (system *TransitionSystem) Initial(valuations language.Valuations) State {
-	return NewState(system.automaton.initial, valuations)
+func (system *TransitionSystem) Initial() State {
+	key := system.automaton.initial
+	location, _ := system.automaton.Location(key)
+	return NewState(key, location.invariant.constraint)
 }
 
 // Returns all states from the state.
@@ -23,7 +22,7 @@ func (system *TransitionSystem) Outgoing(state State) (successors []State) {
 	if location, exists := system.automaton.Location(state.location); exists {
 		// We have found an inconsistency where the location is disabled.
 		// Meaning that even enabled edges wont be traversable.
-		if !location.IsEnabled(newSolver(nil, nil, nil)) {
+		if !location.IsEnabled(system.solver) {
 			return successors
 		}
 	} else {
@@ -33,30 +32,30 @@ func (system *TransitionSystem) Outgoing(state State) (successors []State) {
 	edges := system.automaton.Outgoing(state.location)
 	for _, edge := range edges {
 		// Check if we can even traverse the edge.
-		if !edge.IsEnabled(newSolver(nil, nil, nil)) {
+		if !edge.IsEnabled(system.solver) {
 			continue
 		}
 
 		// We can traverse the edge so we create a new and updated state.
-		state := edge.Traverse(system.variables, state)
+		state := edge.Traverse(state)
 		successors = append(successors, state)
 	}
 	return successors
 }
 
-func (system *TransitionSystem) Reachability(search SearchStrategy, goals ...State) Trace {
+func (system *TransitionSystem) Reachability(solver ConstraintSolver, search SearchStrategy, goals ...State) Trace {
 	return search.For(
 		func(state State) bool {
 			// We have reached a goal when the locations are the same
 			// and the goal contains (Meaning that more valuations or the same) are possible.
 			for _, goal := range goals {
-				if goal.SubsetOf(state) {
+				if goal.SubsetOf(state, solver) {
 					return true
 				}
 			}
 
 			return false
 		},
-		system.Initial(nil), // TODO
+		system.Initial(),
 	)
 }

@@ -4,22 +4,37 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language"
+	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/graph"
+	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
-type Automaton struct {
-	context *z3.Context
-	graph   *graph.LabeledDirected[Edge, Location]
-	initial graph.Key
+var AngelicCompletion = func(location graph.Key, _ Guard) graph.Key {
+	return location
 }
 
-func NewAutomaton(context *z3.Context, graph *graph.LabeledDirected[Edge, Location], initial graph.Key) *Automaton {
+var AlwaysCompletion = func(destination graph.Key) func(graph.Key, Guard) graph.Key {
+	return func(graph.Key, Guard) graph.Key {
+		return destination
+	}
+}
+
+type Automaton struct {
+	graph   *graph.LabeledDirected[Edge, Location]
+	initial graph.Key
+	symbols symbols.Store[any]
+}
+
+func NewAutomaton(
+	graph *graph.LabeledDirected[Edge, Location],
+	initial graph.Key,
+	symbols symbols.Store[any],
+) *Automaton {
 	return &Automaton{
-		context: context,
 		graph:   graph,
 		initial: initial,
+		symbols: symbols,
 	}
 }
 
@@ -44,7 +59,7 @@ func (automaton *Automaton) Ingoing(location graph.Key) (edges []Edge) {
 	return automaton.graph.To(location)
 }
 
-func (automaton *Automaton) Complete(variables language.Variables, complete func(graph.Key, Guard) graph.Key) {
+func (automaton *Automaton) Complete(solver *ConstraintSolver, complete func(graph.Key, Guard) graph.Key) {
 	automaton.Locations(func(source graph.Key, location Location) bool {
 		// The disjunction is the disjunction of all guards.
 		var disjunction Guard
@@ -60,18 +75,26 @@ func (automaton *Automaton) Complete(variables language.Variables, complete func
 			}
 		} else {
 			// If there are not outgoing edges then we assume a false edge.
-			disjunction = NewGuard(language.NewFalse())
+			disjunction = NewGuard(
+				constraints.NewLogicalConstraint(
+					expressions.NewFalse(),
+				),
+			)
 		}
 
 		// Constrain by the location's invariant.
-		invariant := NewGuard(location.invariant.condition)
+		invariant := NewGuard(location.invariant.constraint)
 		missing := disjunction.Negation().Conjunction(invariant)
 
 		// If the negation of all didisjunctionsjoined edge guards constrained by the invariant
 		// still has a solution then we have a "missing" edge to the completion destination.
-		if missing.IsSatisfiable(newSolver(nil, nil, nil)) {
+		if missing.IsSatisfiable(solver) {
 			destination := complete(source, missing)
-			update := NewUpdate()
+			update := NewUpdate(
+				constraints.NewLogicalConstraint(
+					expressions.NewTrue(),
+				),
+			)
 			edge := NewEdge(source, missing, update, destination)
 			automaton.graph.AddEdge(edge)
 		}
@@ -84,12 +107,12 @@ func (automaton *Automaton) DOT(writer io.Writer) {
 	automaton.graph.DOT(
 		writer,
 		func(location Location) string {
-			return fmt.Sprintf("%v", location.name)
+			return fmt.Sprintf("%s\n%s", location.name, location.invariant.String(automaton.symbols))
 		},
 		func(edge Edge) string {
-			guard := edge.guard.String()
-			update := edge.update.String()
-			return fmt.Sprintf("\n%s\n%s", guard, update)
+			guard := edge.guard.String(automaton.symbols)
+			update := edge.update.String(automaton.symbols)
+			return fmt.Sprintf("%s\n%s", guard, update)
 		},
 	)
 }

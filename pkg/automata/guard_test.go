@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language"
+	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
@@ -13,45 +14,42 @@ func Test_IsSatisfiable(t *testing.T) {
 	symbols := symbols.NewSymbolsMap[string](
 		symbols.NewSymbolsFactory(),
 	)
-
-	variables := language.NewVariablesMap()
-	x := variables.Declare(symbols.Insert("x"), language.IntegerSort)
-	y := variables.Declare(symbols.Insert("y"), language.IntegerSort)
+	x, y := symbols.Insert("x"), symbols.Insert("y")
 
 	guard := NewGuard(
-		language.Conjunction(
-			language.NewBinary(
-				x,
-				language.Equal,
-				language.NewInteger(2),
-			),
-			language.Disjunction(
-				language.NewBinary(
-					y,
-					language.LessThanEqual,
-					language.NewInteger(1),
+		constraints.NewLogicalConstraint(
+			expressions.Conjunction(
+				expressions.NewBinary(
+					expressions.NewVariable(x, expressions.IntegerSort),
+					expressions.Equal,
+					expressions.NewInteger(2),
 				),
-				language.NewBinary(
-					y,
-					language.GreaterThanEqual,
-					language.NewInteger(3),
+				expressions.Disjunction(
+					expressions.NewBinary(
+						expressions.NewVariable(y, expressions.IntegerSort),
+						expressions.LessThanEqual,
+						expressions.NewInteger(1),
+					),
+					expressions.NewBinary(
+						expressions.NewVariable(y, expressions.IntegerSort),
+						expressions.GreaterThanEqual,
+						expressions.NewInteger(3),
+					),
 				),
 			),
 		),
 	)
 
-	valuations := language.NewValuationsMap()
-	valuations.Assign(
-		x.Symbol(),
-		language.NewInteger(2),
-	) // x = 2
-	valuations.Assign(
-		y.Symbol(),
-		language.NewInteger(3),
-	) // y = 1
-
 	context := z3.NewContext(z3.NewConfig())
-	solver := newSolver(context.NewSolver(), variables, valuations)
+	valuations := expressions.NewValuationsMap()
+	solver := NewConstraintSolver(context.NewSolver(), valuations)
+	solver.Assert(constraints.NewLogicalConstraint(
+		expressions.NewBinary(
+			expressions.NewVariable(y, expressions.IntegerSort),
+			expressions.LessThanEqual,
+			expressions.NewInteger(2),
+		),
+	))
 
 	// Act
 	satisfiable := guard.IsSatisfiable(solver)

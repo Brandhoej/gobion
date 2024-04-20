@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language"
+	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language/statements"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
@@ -13,25 +15,25 @@ func Test_Apply(t *testing.T) {
 	symbols := symbols.NewSymbolsMap[string](
 		symbols.NewSymbolsFactory(),
 	)
-	variables := language.NewVariablesMap()
-	x := variables.Declare(symbols.Insert("x"), language.IntegerSort)
-	y := variables.Declare(symbols.Insert("y"), language.IntegerSort)
+	x := expressions.NewVariable(symbols.Insert("x"), expressions.IntegerSort)
+	y := expressions.NewVariable(symbols.Insert("y"), expressions.IntegerSort)
 
 	update := NewUpdate(
-		language.NewAssignment(x, language.NewInteger(1)),
+		constraints.NewAssignmentConstraint(
+			statements.NewAssignment(x, expressions.NewInteger(1)),
+		),
 	)
 
-	before := language.NewValuationsMap()
-	before.Assign(x.Symbol(), language.NewInteger(0))
-	before.Assign(y.Symbol(), language.NewInteger(0))
-	
+	before := expressions.NewValuationsMap()
+	before.Assign(x.Symbol(), expressions.NewInteger(0))
+	before.Assign(y.Symbol(), expressions.NewInteger(0))
+
 	context := z3.NewContext(z3.NewConfig())
-	statements := language.NewSymbolicStatementInterpreter(context, before)
+	solver := NewConstraintSolver(context.NewSolver(), before)
 
 	// Act
-	after := update.Apply(statements, before)
+	update.Apply(solver)
 
 	// Assert
-	t.Log(after)
 	t.FailNow()
 }

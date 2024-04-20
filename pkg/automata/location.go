@@ -1,17 +1,17 @@
 package automata
 
 type Location struct {
-	name string
+	name      string
 	invariant Invariant
 }
 
 func NewLocation(name string, invariant Invariant) Location {
 	return Location{
-		name: name,
+		name:      name,
 		invariant: invariant,
 	}
 }
 
-func (location Location) IsEnabled(solver Solver) bool {
+func (location Location) IsEnabled(solver *ConstraintSolver) bool {
 	return location.invariant.IsSatisfiable(solver)
 }
