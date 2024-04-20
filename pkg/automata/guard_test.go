@@ -42,14 +42,8 @@ func Test_IsSatisfiable(t *testing.T) {
 
 	context := z3.NewContext(z3.NewConfig())
 	valuations := expressions.NewValuationsMap()
-	solver := NewConstraintSolver(context.NewSolver(), valuations)
-	solver.Assert(constraints.NewLogicalConstraint(
-		expressions.NewBinary(
-			expressions.NewVariable(y, expressions.IntegerSort),
-			expressions.LessThanEqual,
-			expressions.NewInteger(2),
-		),
-	))
+	variables := expressions.NewVariablesMap()
+	solver := NewConstraintSolver(context.NewSolver(), valuations, variables)
 
 	// Act
 	satisfiable := guard.IsSatisfiable(solver)

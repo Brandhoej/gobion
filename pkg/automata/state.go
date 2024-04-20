@@ -20,11 +20,14 @@ func NewState(
 	}
 }
 
-func (state State) SubsetOf(other State, solver ConstraintSolver) bool {
-	if state.location == other.location {
-		return true
+func (state State) SubsetOf(other State, solver *ConstraintSolver) bool {
+	if state.location != other.location {
+		return false
 	}
 	return solver.HasSolutionFor(
-		constraints.Conjunction(state.constraint, other.constraint),
+		constraints.Implication(
+			constraints.Conjunction(state.constraint, other.constraint),
+			state.constraint,
+		),
 	)
 }

@@ -1,7 +1,7 @@
 package automata
 
 type TransitionSystem struct {
-	solver *ConstraintSolver
+	solver    *ConstraintSolver
 	automaton *Automaton
 }
 
@@ -43,7 +43,7 @@ func (system *TransitionSystem) Outgoing(state State) (successors []State) {
 	return successors
 }
 
-func (system *TransitionSystem) Reachability(solver ConstraintSolver, search SearchStrategy, goals ...State) Trace {
+func (system *TransitionSystem) Reachability(solver *ConstraintSolver, search SearchStrategy, goals ...State) Trace {
 	return search.For(
 		func(state State) bool {
 			// We have reached a goal when the locations are the same

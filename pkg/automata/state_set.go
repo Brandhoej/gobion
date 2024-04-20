@@ -12,13 +12,13 @@ func NewStateSet() StateSet {
 	}
 }
 
-func (set StateSet) Insert(solver ConstraintSolver, states ...State) (counter int) {
+func (set StateSet) Insert(solver *ConstraintSolver, states ...State) (counter int) {
 	for _, state := range states {
 		if states, exists := set.states[state.location]; exists {
 			if set.Contains(state, solver) {
-				return
+				continue
 			}
-	
+
 			set.states[state.location] = append(states, state)
 		} else {
 			set.states[state.location] = []State{state}
@@ -30,7 +30,7 @@ func (set StateSet) Insert(solver ConstraintSolver, states ...State) (counter in
 	return counter
 }
 
-func (set StateSet) Contains(target State, solver ConstraintSolver) bool {
+func (set StateSet) Contains(target State, solver *ConstraintSolver) bool {
 	if states, exists := set.states[target.location]; exists {
 		for _, state := range states {
 			if target.SubsetOf(state, solver) {

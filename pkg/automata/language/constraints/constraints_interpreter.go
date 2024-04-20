@@ -50,6 +50,8 @@ func (interpreter SymbolicInterpreter) BinaryConstraint(constraint BinaryConstra
 		return z3.And(lhs, rhs)
 	case LogicalOr:
 		return z3.Or(lhs, rhs)
+	case LogicalImplication:
+		return z3.Implies(lhs, rhs)
 	}
 	panic("Unknown binary constraint operator")
 }

@@ -28,8 +28,11 @@ func Test_Apply(t *testing.T) {
 	before.Assign(x.Symbol(), expressions.NewInteger(0))
 	before.Assign(y.Symbol(), expressions.NewInteger(0))
 
+	valuations := expressions.NewValuationsMap()
+	variables := expressions.NewVariablesMap()
+
 	context := z3.NewContext(z3.NewConfig())
-	solver := NewConstraintSolver(context.NewSolver(), before)
+	solver := NewConstraintSolver(context.NewSolver(), valuations, variables)
 
 	// Act
 	update.Apply(solver)

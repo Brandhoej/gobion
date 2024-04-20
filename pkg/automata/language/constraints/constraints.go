@@ -61,6 +61,7 @@ type BinaryConstraintOperator uint16
 const (
 	LogicalAnd = BinaryConstraintOperator(0)
 	LogicalOr  = BinaryConstraintOperator(1)
+	LogicalImplication = BinaryConstraintOperator(2)
 )
 
 type BinaryConstraint struct {
@@ -100,6 +101,14 @@ func Disjunction(constraint Constraint, constraints ...Constraint) (disjunction 
 		disjunction = NewBinary(disjunction, LogicalOr, constraints[idx])
 	}
 	return disjunction
+}
+
+func Implication(premise, conclusion Constraint) Constraint {
+	return BinaryConstraint{
+		lhs: premise,
+		operator: LogicalImplication,
+		rhs: conclusion,
+	}
 }
 
 func (constraint BinaryConstraint) Accept(visitor ConstraintVisitor) {

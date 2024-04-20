@@ -11,10 +11,10 @@ type SearchStrategy interface {
 
 type BreadthFirstSearch struct {
 	system *TransitionSystem
-	solver ConstraintSolver
+	solver *ConstraintSolver
 }
 
-func NewBreadthFirstSearch(system *TransitionSystem, solver ConstraintSolver) BreadthFirstSearch {
+func NewBreadthFirstSearch(system *TransitionSystem, solver *ConstraintSolver) BreadthFirstSearch {
 	return BreadthFirstSearch{
 		system:  system,
 		solver: solver,
@@ -45,10 +45,10 @@ func (search BreadthFirstSearch) For(yield func(state State) bool, roots ...Stat
 
 type DepthFirstSearch struct {
 	system *TransitionSystem
-	solver ConstraintSolver
+	solver *ConstraintSolver
 }
 
-func NewDepthFirstSearch(system *TransitionSystem, solver ConstraintSolver) DepthFirstSearch {
+func NewDepthFirstSearch(system *TransitionSystem, solver *ConstraintSolver) DepthFirstSearch {
 	return DepthFirstSearch{
 		system:  system,
 		solver: solver,
