@@ -29,6 +29,8 @@ func Test_Apply(t *testing.T) {
 	)
 
 	variables := expressions.NewVariablesMap()
+	variables.Declare(x.Symbol(), expressions.IntegerSort)
+	variables.Declare(y.Symbol(), expressions.IntegerSort)
 	valuations := expressions.NewValuationsMap()
 	valuations.Assign(x.Symbol(), expressions.NewInteger(0))
 	valuations.Assign(y.Symbol(), yVal)

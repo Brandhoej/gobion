@@ -45,13 +45,17 @@ func (interpreter *SymbolicInterpreter) AssignmentConstraint(constraint Assignme
 }
 
 func (interpreter *SymbolicInterpreter) Assignment(assignment statements.Assignment) *z3.AST {
+	variable := interpreter.expressions.Variable(assignment.LHS())
+	valuation := interpreter.expressions.Interpret(assignment.RHS())
 	// TODO: This is actually incorrect when considering implications.
 	// E.g., if (x >= 3) x=3 else x=1.
 	// Symbolic execution should be performed on the constraint
 	// with path merging to yield a valuation of "ITE"-form if necessary.
-	valuation := interpreter.expressions.Interpret(assignment.RHS())
+	// Since valuations are Expressions we could also just create a ITE expression
+	// that would allow valuations to use it. However, maybe the semantics for
+	// constraints are not as set as one might have expected.
 	interpreter.valuations.Assign(assignment.LHS().Symbol(), assignment.RHS())
-	return valuation
+	return z3.Eq(variable, valuation)
 }
 
 func (interpreter *SymbolicInterpreter) ExpressionConstraint(constraint ExpressionConstraint) *z3.AST {
