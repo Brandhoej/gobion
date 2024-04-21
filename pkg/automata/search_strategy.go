@@ -16,7 +16,7 @@ type BreadthFirstSearch struct {
 
 func NewBreadthFirstSearch(system *TransitionSystem, solver *ConstraintSolver) BreadthFirstSearch {
 	return BreadthFirstSearch{
-		system:  system,
+		system: system,
 		solver: solver,
 	}
 }
@@ -50,7 +50,7 @@ type DepthFirstSearch struct {
 
 func NewDepthFirstSearch(system *TransitionSystem, solver *ConstraintSolver) DepthFirstSearch {
 	return DepthFirstSearch{
-		system:  system,
+		system: system,
 		solver: solver,
 	}
 }

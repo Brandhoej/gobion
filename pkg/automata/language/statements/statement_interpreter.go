@@ -12,13 +12,15 @@ type SymbolicInterpreter struct {
 }
 
 func NewSymbolicInterpreter(
-	context *z3.Context, valuations expressions.Valuations,
+	context *z3.Context,
+	valuations expressions.Valuations,
+	variables expressions.Variables,
 ) SymbolicInterpreter {
 	return SymbolicInterpreter{
 		context:    context,
 		valuations: valuations,
 		expressions: expressions.NewSymbolicInterpreter(
-			context, valuations,
+			context, variables,
 		),
 	}
 }

@@ -13,7 +13,7 @@ import (
 func TestCompletion(t *testing.T) {
 	// Arrange
 	symbols := symbols.NewSymbolsMap[any](symbols.NewSymbolsFactory())
-	x := expressions.NewVariable(symbols.Insert("x"), expressions.IntegerSort)
+	x := expressions.NewVariable(symbols.Insert("x"))
 
 	builder := NewAutomatonBuilder()
 	initial := builder.AddInitial("Initial")

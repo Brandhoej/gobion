@@ -88,7 +88,7 @@ func (automaton *Automaton) Complete(solver *ConstraintSolver, complete func(gra
 
 		// If the negation of all didisjunctionsjoined edge guards constrained by the invariant
 		// still has a solution then we have a "missing" edge to the completion destination.
-		if missing.IsSatisfiable(solver) {
+		if missing.IsSatisfiable(expressions.NewValuationsMap(), solver) {
 			destination := complete(source, missing)
 			update := NewUpdate(
 				constraints.NewLogicalConstraint(

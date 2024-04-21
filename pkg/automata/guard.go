@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
@@ -50,8 +51,8 @@ func (guard Guard) Negation() Guard {
 	return NewGuard(negation)
 }
 
-func (guard Guard) IsSatisfiable(solver *ConstraintSolver) bool {
-	return solver.HasSolutionFor(guard.constraint)
+func (guard Guard) IsSatisfiable(valuations expressions.Valuations, solver *ConstraintSolver) bool {
+	return solver.Satisfies(valuations, guard.constraint)
 }
 
 func (guard Guard) String(symbols symbols.Store[any]) string {

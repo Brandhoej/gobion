@@ -1,5 +1,7 @@
 package automata
 
+import "github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+
 type Location struct {
 	name      string
 	invariant Invariant
@@ -12,6 +14,6 @@ func NewLocation(name string, invariant Invariant) Location {
 	}
 }
 
-func (location Location) IsEnabled(solver *ConstraintSolver) bool {
-	return location.invariant.IsSatisfiable(solver)
+func (location Location) IsEnabled(valuations expressions.Valuations, solver *ConstraintSolver) bool {
+	return location.invariant.IsSatisfiable(valuations, solver)
 }

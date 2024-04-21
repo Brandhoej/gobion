@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
@@ -25,8 +26,8 @@ func NewFalseInvariant() Invariant {
 	return NewInvariant(constraints.NewFalse())
 }
 
-func (invariant Invariant) IsSatisfiable(solver *ConstraintSolver) bool {
-	return solver.HasSolutionFor(invariant.constraint)
+func (invariant Invariant) IsSatisfiable(valuations expressions.Valuations, solver *ConstraintSolver) bool {
+	return solver.Satisfies(valuations, invariant.constraint)
 }
 
 func (invariant Invariant) String(symbols symbols.Store[any]) string {

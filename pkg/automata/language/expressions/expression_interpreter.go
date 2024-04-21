@@ -4,13 +4,13 @@ import "github.com/Brandhoej/gobion/internal/z3"
 
 type SymbolicInterpreter struct {
 	context    *z3.Context
-	valuations Valuations
+	variables Variables
 }
 
-func NewSymbolicInterpreter(context *z3.Context, valuations Valuations) SymbolicInterpreter {
+func NewSymbolicInterpreter(context *z3.Context, variables Variables) SymbolicInterpreter {
 	return SymbolicInterpreter{
 		context:    context,
-		valuations: valuations,
+		variables: variables,
 	}
 }
 
@@ -31,17 +31,20 @@ func (interpreter SymbolicInterpreter) Interpret(expression Expression) *z3.AST 
 }
 
 func (interpreter SymbolicInterpreter) Variable(variable Variable) *z3.AST {
-	var sort *z3.Sort
-	switch variable.Sort() {
-	case BooleanSort:
-		sort = interpreter.context.BooleanSort()
-	case IntegerSort:
-		sort = interpreter.context.IntegerSort()
+	if sort, exists := interpreter.variables.Lookup(variable.symbol); exists {
+		var z3Sort *z3.Sort
+		switch sort {
+		case BooleanSort:
+			z3Sort = interpreter.context.BooleanSort()
+		case IntegerSort:
+			z3Sort = interpreter.context.IntegerSort()
+		}
+	
+		return interpreter.context.NewConstant(
+			z3.WithInt(int(variable.Symbol())), z3Sort,
+		)
 	}
-
-	return interpreter.context.NewConstant(
-		z3.WithInt(int(variable.Symbol())), sort,
-	)
+	panic("Unknown variable")
 }
 
 func (interpreter SymbolicInterpreter) Binary(binary Binary) *z3.AST {

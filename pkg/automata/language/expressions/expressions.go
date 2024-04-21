@@ -67,18 +67,12 @@ const (
 
 type Variable struct {
 	symbol symbols.Symbol
-	sort   Sort
 }
 
-func NewVariable(symbol symbols.Symbol, sort Sort) Variable {
+func NewVariable(symbol symbols.Symbol) Variable {
 	return Variable{
 		symbol: symbol,
-		sort:   sort,
 	}
-}
-
-func (variable Variable) Sort() Sort {
-	return variable.sort
 }
 
 func (variable Variable) Symbol() symbols.Symbol {
