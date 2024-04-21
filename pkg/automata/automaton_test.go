@@ -27,7 +27,7 @@ func TestCompletion(t *testing.T) {
 		),
 		WithUpdate(
 			NewUpdate(
-				constraints.NewAssignmentConstraint(
+				constraints.NewAssignment(
 					statements.NewAssignment(
 						x, expressions.NewBinary(
 							x, expressions.Addition, expressions.NewInteger(1),

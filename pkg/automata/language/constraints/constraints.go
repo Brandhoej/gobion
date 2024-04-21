@@ -46,7 +46,7 @@ type AssignmentConstraint struct {
 	assignment statements.Assignment
 }
 
-func NewAssignmentConstraint(assignment statements.Assignment) AssignmentConstraint {
+func NewAssignment(assignment statements.Assignment) AssignmentConstraint {
 	return AssignmentConstraint{
 		assignment: assignment,
 	}
@@ -59,8 +59,8 @@ func (constraint AssignmentConstraint) Accept(visitor ConstraintVisitor) {
 type BinaryConstraintOperator uint16
 
 const (
-	LogicalAnd = BinaryConstraintOperator(0)
-	LogicalOr  = BinaryConstraintOperator(1)
+	LogicalAnd         = BinaryConstraintOperator(0)
+	LogicalOr          = BinaryConstraintOperator(1)
 	LogicalImplication = BinaryConstraintOperator(2)
 )
 
@@ -105,9 +105,9 @@ func Disjunction(constraint Constraint, constraints ...Constraint) (disjunction 
 
 func Implication(premise, conclusion Constraint) Constraint {
 	return BinaryConstraint{
-		lhs: premise,
+		lhs:      premise,
 		operator: LogicalImplication,
-		rhs: conclusion,
+		rhs:      conclusion,
 	}
 }
 

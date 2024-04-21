@@ -23,7 +23,7 @@ func Test_Apply(t *testing.T) {
 	yVal := expressions.NewInteger(0)
 
 	update := NewUpdate(
-		constraints.NewAssignmentConstraint(
+		constraints.NewAssignment(
 			statements.NewAssignment(x, xVal),
 		),
 	)

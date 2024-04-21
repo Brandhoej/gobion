@@ -3,7 +3,7 @@ package expressions
 import "github.com/Brandhoej/gobion/internal/z3"
 
 type SymbolicInterpreter struct {
-	context    *z3.Context
+	context   *z3.Context
 	variables Variables
 }
 
