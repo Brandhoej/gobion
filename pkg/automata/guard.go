@@ -3,6 +3,7 @@ package automata
 import (
 	"bytes"
 
+	"github.com/Brandhoej/gobion/internal/z3"
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
@@ -51,7 +52,7 @@ func (guard Guard) Negation() Guard {
 	return NewGuard(negation)
 }
 
-func (guard Guard) IsSatisfiable(valuations expressions.Valuations, solver *ConstraintSolver) bool {
+func (guard Guard) IsSatisfiable(valuations expressions.Valuations[*z3.AST], solver *ConstraintSolver) bool {
 	return solver.Satisfies(valuations, guard.constraint)
 }
 

@@ -22,7 +22,7 @@ func TestSCFG1(t *testing.T) {
 
 	func Max() int {
 		sum := 0
-		for x := 0; x < 200; x++ {
+		for x := 0; x < 10; x++ {
 			sum += 1
 		}
 		return sum

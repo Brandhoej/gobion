@@ -14,14 +14,16 @@ import (
 
 func Test_IsSatisfiable(t *testing.T) {
 	// Arrange
+	context := z3.NewContext(z3.NewConfig())
+
 	symbols := symbols.NewSymbolsMap[string](
 		symbols.NewSymbolsFactory(),
 	)
 
-	variables := expressions.NewVariablesMap()
+	variables := expressions.NewVariablesMap[*z3.Sort]()
 	x, y := symbols.Insert("x"), symbols.Insert("y")
-	variables.Declare(x, expressions.IntegerSort)
-	variables.Declare(y, expressions.IntegerSort)
+	variables.Declare(x, context.IntegerSort())
+	variables.Declare(y, context.IntegerSort())
 
 	guard := NewGuard(
 		constraints.NewLogicalConstraint(
@@ -47,15 +49,14 @@ func Test_IsSatisfiable(t *testing.T) {
 		),
 	)
 
-	context := z3.NewContext(z3.NewConfig())
-	valuations := expressions.NewValuationsMap()
+	valuations := expressions.NewValuationsMap[*z3.AST]()
 	solver := NewConstraintSolver(context.NewSolver(), variables)
 
 	for i := 0; i < 1000; i++ {
 		// Act
 		xVal, yVal := rand.Intn(1000)-500, rand.Intn(1000)-500
-		valuations.Assign(x, expressions.NewInteger(xVal))
-		valuations.Assign(y, expressions.NewInteger(yVal))
+		valuations.Assign(x, context.NewInt(xVal, context.IntegerSort()))
+		valuations.Assign(y, context.NewInt(yVal, context.IntegerSort()))
 		satisfiable := guard.IsSatisfiable(valuations, solver)
 
 		// Assert

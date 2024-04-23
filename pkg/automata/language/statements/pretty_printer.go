@@ -13,7 +13,10 @@ type PrettyPrinter struct {
 	symbols symbols.Store[any]
 }
 
-func NewPrettyPrinter(writer io.Writer, symbols symbols.Store[any]) PrettyPrinter {
+func NewPrettyPrinter(
+	writer io.Writer,
+	symbols symbols.Store[any],
+) PrettyPrinter {
 	return PrettyPrinter{
 		writer: writer,
 		symbols: symbols,
@@ -39,6 +42,8 @@ func (printer PrettyPrinter) Expression(expression expressions.Expression) {
 	switch cast := any(expression).(type) {
 	case expressions.Variable:
 		printer.Variable(cast)
+	case expressions.Valuation:
+		printer.Valuation(cast)
 	case expressions.Binary:
 		printer.Binary(cast)
 	case expressions.Integer:
@@ -54,6 +59,11 @@ func (printer PrettyPrinter) Expression(expression expressions.Expression) {
 
 func (printer PrettyPrinter) Variable(variable expressions.Variable) {
 	name, _ := printer.symbols.Item(variable.Symbol())
+	printer.WriteString(fmt.Sprintf("%v'", name))
+}
+
+func (printer PrettyPrinter) Valuation(valuation expressions.Valuation) {
+	name, _ := printer.symbols.Item(valuation.Symbol())
 	printer.WriteString(fmt.Sprintf("%v", name))
 }
 

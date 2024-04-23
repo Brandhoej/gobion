@@ -1,6 +1,7 @@
 package automata
 
 import (
+	"github.com/Brandhoej/gobion/internal/z3"
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/graph"
@@ -8,13 +9,13 @@ import (
 
 type State struct {
 	location   graph.Key
-	valuations expressions.Valuations
+	valuations expressions.Valuations[*z3.AST]
 	constraint constraints.Constraint
 }
 
 func NewState(
 	location graph.Key,
-	valuations expressions.Valuations,
+	valuations expressions.Valuations[*z3.AST],
 	constraint constraints.Constraint,
 ) State {
 	return State{

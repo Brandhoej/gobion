@@ -7,20 +7,20 @@ import (
 
 type SymbolicInterpreter struct {
 	context     *z3.Context
-	valuations  expressions.Valuations
+	valuations  expressions.Valuations[*z3.AST]
 	expressions expressions.SymbolicInterpreter
 }
 
 func NewSymbolicInterpreter(
 	context *z3.Context,
-	valuations expressions.Valuations,
-	variables expressions.Variables,
+	valuations expressions.Valuations[*z3.AST],
+	variables expressions.Variables[*z3.Sort],
 ) SymbolicInterpreter {
 	return SymbolicInterpreter{
 		context:    context,
 		valuations: valuations,
 		expressions: expressions.NewSymbolicInterpreter(
-			context, variables,
+			context, variables, valuations,
 		),
 	}
 }
@@ -41,5 +41,6 @@ func (interpreter SymbolicInterpreter) Block(block Block) {
 }
 
 func (interpreter SymbolicInterpreter) Assignment(assignment Assignment) {
-	interpreter.valuations.Assign(assignment.lhs.Symbol(), assignment.rhs)
+	rhs := interpreter.expressions.Interpret(assignment.rhs)
+	interpreter.valuations.Assign(assignment.lhs.Symbol(), rhs)
 }

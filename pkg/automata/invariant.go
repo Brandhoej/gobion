@@ -3,6 +3,7 @@ package automata
 import (
 	"bytes"
 
+	"github.com/Brandhoej/gobion/internal/z3"
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
@@ -26,7 +27,7 @@ func NewFalseInvariant() Invariant {
 	return NewInvariant(constraints.NewFalse())
 }
 
-func (invariant Invariant) IsSatisfiable(valuations expressions.Valuations, solver *ConstraintSolver) bool {
+func (invariant Invariant) IsSatisfiable(valuations expressions.Valuations[*z3.AST], solver *ConstraintSolver) bool {
 	return solver.Satisfies(valuations, invariant.constraint)
 }
 

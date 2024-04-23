@@ -2,12 +2,10 @@ package constraints
 
 import (
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
-	"github.com/Brandhoej/gobion/pkg/automata/language/statements"
 )
 
 type ConstraintVisitor interface {
 	ExpressionConstraint(constraint ExpressionConstraint)
-	AssignmentConstraint(constraint AssignmentConstraint)
 	BinaryConstraint(constraint BinaryConstraint)
 	UnaryConstraint(constraint UnaryConstraint)
 }
@@ -40,20 +38,6 @@ func NewFalse() ExpressionConstraint {
 
 func (constraint ExpressionConstraint) Accept(visitor ConstraintVisitor) {
 	visitor.ExpressionConstraint(constraint)
-}
-
-type AssignmentConstraint struct {
-	assignment statements.Assignment
-}
-
-func NewAssignment(assignment statements.Assignment) AssignmentConstraint {
-	return AssignmentConstraint{
-		assignment: assignment,
-	}
-}
-
-func (constraint AssignmentConstraint) Accept(visitor ConstraintVisitor) {
-	visitor.AssignmentConstraint(constraint)
 }
 
 type BinaryConstraintOperator uint16

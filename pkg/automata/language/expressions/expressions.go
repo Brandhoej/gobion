@@ -4,10 +4,12 @@ import "github.com/Brandhoej/gobion/pkg/symbols"
 
 type ExpressionVisitor interface {
 	Variable(variable Variable)
+	Valuation(valuation Valuation)
 	Binary(binary Binary)
 	Integer(integer Integer)
 	Boolean(boolean Boolean)
 	Unary(unary Unary)
+	IfThenElse(ite IfThenElse)
 }
 
 type Expression interface {
@@ -81,6 +83,24 @@ func (variable Variable) Symbol() symbols.Symbol {
 
 func (variable Variable) Accept(visitor ExpressionVisitor) {
 	visitor.Variable(variable)
+}
+
+type Valuation struct {
+	symbol symbols.Symbol
+}
+
+func NewValuation(symbol symbols.Symbol) Valuation {
+	return Valuation{
+		symbol: symbol,
+	}
+}
+
+func (valuation Valuation) Symbol() symbols.Symbol {
+	return valuation.symbol
+}
+
+func (valuation Valuation) Accept(visitor ExpressionVisitor) {
+	visitor.Valuation(valuation)
 }
 
 type BinaryExpressionOperator uint16
@@ -183,4 +203,20 @@ func LogicalNegate(expression Expression) Unary {
 
 func (binary Binary) Accept(visitor ExpressionVisitor) {
 	visitor.Binary(binary)
+}
+
+type IfThenElse struct {
+	condition, consequence, alternative Expression
+}
+
+func NewIfThenElse(condition, consequence, alternative Expression) IfThenElse {
+	return IfThenElse{
+		condition: condition,
+		consequence: consequence,
+		alternative: alternative,
+	}
+}
+
+func (ite IfThenElse) Accept(visitor ExpressionVisitor) {
+	visitor.IfThenElse(ite)
 }

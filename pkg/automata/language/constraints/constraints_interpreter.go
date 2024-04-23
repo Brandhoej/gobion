@@ -3,33 +3,30 @@ package constraints
 import (
 	"github.com/Brandhoej/gobion/internal/z3"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
-	"github.com/Brandhoej/gobion/pkg/automata/language/statements"
 )
 
 type SymbolicInterpreter struct {
 	context *z3.Context
+	solver *z3.Solver
 	expressions expressions.SymbolicInterpreter
-	statements statements.SymbolicInterpreter
-	valuations expressions.Valuations
+	pc *z3.AST
 }
 
 func NewSymbolicInterpreter(
 	context *z3.Context,
-	valuations expressions.Valuations,
-	variables expressions.Variables,
+	valuations expressions.Valuations[*z3.AST],
+	variables expressions.Variables[*z3.Sort],
 ) *SymbolicInterpreter {
 	return &SymbolicInterpreter{
 		context: context,
-		expressions: expressions.NewSymbolicInterpreter(context, variables),
-		statements: statements.NewSymbolicInterpreter(context, valuations, variables),
-		valuations: valuations,
+		solver: context.NewSolver(),
+		expressions: expressions.NewSymbolicInterpreter(context, variables, valuations),
+		pc: context.NewTrue(),
 	}
 }
 
 func (interpreter *SymbolicInterpreter) Interpret(constraint Constraint) *z3.AST {
 	switch cast := any(constraint).(type) {
-	case AssignmentConstraint:
-		return interpreter.AssignmentConstraint(cast)
 	case ExpressionConstraint:
 		return interpreter.ExpressionConstraint(cast)
 	case BinaryConstraint:
@@ -38,24 +35,6 @@ func (interpreter *SymbolicInterpreter) Interpret(constraint Constraint) *z3.AST
 		return interpreter.UnaryConstraint(cast)
 	}
 	panic("Unknown constraint type")
-}
-
-func (interpreter *SymbolicInterpreter) AssignmentConstraint(constraint AssignmentConstraint) *z3.AST {
-	return interpreter.Assignment(constraint.assignment)
-}
-
-func (interpreter *SymbolicInterpreter) Assignment(assignment statements.Assignment) *z3.AST {
-	variable := interpreter.expressions.Variable(assignment.LHS())
-	valuation := interpreter.expressions.Interpret(assignment.RHS())
-	// TODO: This is actually incorrect when considering implications.
-	// E.g., if (x >= 3) x=3 else x=1.
-	// Symbolic execution should be performed on the constraint
-	// with path merging to yield a valuation of "ITE"-form if necessary.
-	// Since valuations are Expressions we could also just create a ITE expression
-	// that would allow valuations to use it. However, maybe the semantics for
-	// constraints are not as set as one might have expected.
-	interpreter.valuations.Assign(assignment.LHS().Symbol(), assignment.RHS())
-	return z3.Eq(variable, valuation)
 }
 
 func (interpreter *SymbolicInterpreter) ExpressionConstraint(constraint ExpressionConstraint) *z3.AST {

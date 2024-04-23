@@ -6,14 +6,13 @@ import (
 
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
-	"github.com/Brandhoej/gobion/pkg/automata/language/statements"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 func TestCompletion(t *testing.T) {
 	// Arrange
 	symbols := symbols.NewSymbolsMap[any](symbols.NewSymbolsFactory())
-	x := expressions.NewVariable(symbols.Insert("x"))
+	x := symbols.Insert("x")
 
 	builder := NewAutomatonBuilder()
 	initial := builder.AddInitial("Initial")
@@ -21,16 +20,20 @@ func TestCompletion(t *testing.T) {
 		WithGuard(
 			NewGuard(constraints.NewLogicalConstraint(
 				expressions.NewBinary(
-					x, expressions.LessThanEqual, expressions.NewInteger(10),
+					expressions.NewValuation(x), expressions.LessThanEqual, expressions.NewInteger(10),
 				),
 			)),
 		),
 		WithUpdate(
 			NewUpdate(
-				constraints.NewAssignment(
-					statements.NewAssignment(
-						x, expressions.NewBinary(
-							x, expressions.Addition, expressions.NewInteger(1),
+				constraints.NewLogicalConstraint(
+					expressions.NewBinary(
+						expressions.NewVariable(x),
+						expressions.Equal,
+						expressions.NewBinary(
+							expressions.NewValuation(x),
+							expressions.Addition,
+							expressions.NewInteger(1),
 						),
 					),
 				),

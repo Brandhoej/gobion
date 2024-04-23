@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
@@ -24,8 +23,8 @@ func NewEmptyUpdate() Update {
 	}
 }
 
-func (update Update) Apply(valuations expressions.Valuations, solver *ConstraintSolver) {
-	solver.Apply(valuations, update.constraint)
+func (update Update) Apply(constraint constraints.Constraint) constraints.Constraint {
+	return constraints.Conjunction(update.constraint, constraint)
 }
 
 func (update Update) String(symbols symbols.Store[any]) string {

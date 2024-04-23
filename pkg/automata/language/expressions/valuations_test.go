@@ -13,7 +13,7 @@ func Test_Value(t *testing.T) {
 		symbols.NewSymbolsFactory(),
 	)
 	a, b, c := symbols.Insert(1), symbols.Insert(2), symbols.Insert(3)
-	valuations := NewValuationsMap()
+	valuations := NewValuationsMap[Expression]()
 	zero, one, two, three := NewInteger(0), NewInteger(1), NewInteger(2), NewInteger(3)
 
 	// Act
