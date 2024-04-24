@@ -153,6 +153,13 @@ func (context *Context) NewInt(value int, sort *Sort) *AST {
 	}, sort)
 }
 
+func (context *Context) NewBoolean(value bool) *AST {
+	if value {
+		return context.NewTrue()
+	}
+	return context.NewFalse()
+}
+
 func (context *Context) NewTrue() *AST {
 	return context.wrapAST(
 		C.Z3_mk_true(context.z3Context),

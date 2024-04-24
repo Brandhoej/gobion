@@ -2,7 +2,6 @@ package automata
 
 import (
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/graph"
 )
@@ -10,13 +9,13 @@ import (
 type State struct {
 	location   graph.Key
 	valuations expressions.Valuations[*z3.AST]
-	constraint constraints.Constraint
+	constraint expressions.Expression
 }
 
 func NewState(
 	location graph.Key,
 	valuations expressions.Valuations[*z3.AST],
-	constraint constraints.Constraint,
+	constraint expressions.Expression,
 ) State {
 	return State{
 		location:   location,
@@ -25,14 +24,15 @@ func NewState(
 	}
 }
 
-func (state State) SubsetOf(other State, solver *ConstraintSolver) bool {
+func (state State) SubsetOf(other State, solver *Interpreter) bool {
 	if state.location != other.location {
 		return false
 	}
-	return solver.Satisfies(
+	return solver.IsSatisfied(
 		state.valuations,
-		constraints.Implication(
-			constraints.Conjunction(state.constraint, other.constraint),
+		expressions.NewBinary(
+			expressions.Conjunction(state.constraint, other.constraint),
+			expressions.Implication,
 			state.constraint,
 		),
 	)

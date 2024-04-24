@@ -3,33 +3,33 @@ package automata
 import (
 	"bytes"
 
-	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
+	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 type Update struct {
-	constraint constraints.Constraint
+	expression expressions.Expression
 }
 
-func NewUpdate(constraint constraints.Constraint) Update {
+func NewUpdate(expression expressions.Expression) Update {
 	return Update{
-		constraint: constraint,
+		expression: expression,
 	}
 }
 
 func NewEmptyUpdate() Update {
 	return Update{
-		constraint: constraints.NewTrue(),
+		expression: expressions.NewTrue(),
 	}
 }
 
-func (update Update) Apply(constraint constraints.Constraint) constraints.Constraint {
-	return constraints.Conjunction(update.constraint, constraint)
+func (update Update) Apply(expression expressions.Expression) expressions.Expression {
+	return expressions.Conjunction(update.expression, expression)
 }
 
 func (update Update) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
-	printer := constraints.NewPrettyPrinter(&buffer, symbols)
-	printer.Constraint(update.constraint)
+	printer := expressions.NewPrettyPrinter(&buffer, symbols)
+	printer.Expression(update.expression)
 	return buffer.String()
 }

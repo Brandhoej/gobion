@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/graph"
 	"github.com/Brandhoej/gobion/pkg/symbols"
@@ -18,7 +17,7 @@ func Test_SubsetOf(t *testing.T) {
 	context := z3.NewContext(z3.NewConfig())
 	variables := expressions.NewVariablesMap[*z3.Sort]()
 	variables.Declare(symbols.Insert("x"), context.IntegerSort())
-	solver := NewConstraintSolver(context.NewSolver(), variables)
+	solver := NewInterpreter(context, variables)
 	tests := []struct {
 		name     string
 		lhs, rhs State
@@ -26,20 +25,20 @@ func Test_SubsetOf(t *testing.T) {
 	}{
 		{
 			name:     "(0, True) ⊆ (0, True)",
-			lhs:      NewState(graph.Key(0), valuations, constraints.NewTrue()),
-			rhs:      NewState(graph.Key(0), valuations, constraints.NewTrue()),
+			lhs:      NewState(graph.Key(0), valuations, expressions.NewTrue()),
+			rhs:      NewState(graph.Key(0), valuations, expressions.NewTrue()),
 			expected: true,
 		},
 		{
 			name:     "(1, True) ⊈ (0, True)",
-			lhs:      NewState(graph.Key(1), valuations, constraints.NewTrue()),
-			rhs:      NewState(graph.Key(0), valuations, constraints.NewTrue()),
+			lhs:      NewState(graph.Key(1), valuations, expressions.NewTrue()),
+			rhs:      NewState(graph.Key(0), valuations, expressions.NewTrue()),
 			expected: false,
 		},
 		{
 			name:     "(0, False) ⊈ (0, True)",
-			lhs:      NewState(graph.Key(0), valuations, constraints.NewFalse()),
-			rhs:      NewState(graph.Key(0), valuations, constraints.NewTrue()),
+			lhs:      NewState(graph.Key(0), valuations, expressions.NewFalse()),
+			rhs:      NewState(graph.Key(0), valuations, expressions.NewTrue()),
 			expected: true,
 		},
 		{
@@ -47,13 +46,11 @@ func Test_SubsetOf(t *testing.T) {
 			lhs: NewState(
 				graph.Key(0),
 				valuations,
-				constraints.NewLogicalConstraint(
-					expressions.NewBinary(
-						x, expressions.Equal, expressions.NewInteger(0),
-					),
+				expressions.NewBinary(
+					x, expressions.Equal, expressions.NewInteger(0),
 				),
 			),
-			rhs:      NewState(graph.Key(0), valuations, constraints.NewTrue()),
+			rhs:      NewState(graph.Key(0), valuations, expressions.NewTrue()),
 			expected: true,
 		},
 		{
@@ -61,13 +58,11 @@ func Test_SubsetOf(t *testing.T) {
 			lhs: NewState(
 				graph.Key(0),
 				valuations,
-				constraints.NewLogicalConstraint(
-					expressions.NewBinary(
-						x, expressions.Equal, expressions.NewInteger(0),
-					),
+				expressions.NewBinary(
+					x, expressions.Equal, expressions.NewInteger(0),
 				),
 			),
-			rhs:      NewState(graph.Key(0), valuations, constraints.NewTrue()),
+			rhs:      NewState(graph.Key(0), valuations, expressions.NewTrue()),
 			expected: true,
 		},
 	}

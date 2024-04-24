@@ -4,61 +4,64 @@ import (
 	"bytes"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 type Guard struct {
-	constraint constraints.Constraint
+	condition expressions.Expression
 }
 
-func NewGuard(constraint constraints.Constraint) Guard {
+func NewGuard(condition expressions.Expression) Guard {
 	return Guard{
-		constraint: constraint,
+		condition: condition,
 	}
 }
 
 func NewTrueGuard() Guard {
-	return NewGuard(constraints.NewTrue())
+	return NewGuard(expressions.NewTrue())
 }
 
 func NewFalseGuard() Guard {
-	return NewGuard(constraints.NewFalse())
+	return NewGuard(expressions.NewFalse())
 }
 
 // Finds the union of all variables and adds conjunctive terms
 func (guard Guard) Conjunction(guards ...Guard) Guard {
-	conditions := make([]constraints.Constraint, len(guards))
+	conditions := make([]expressions.Expression, len(guards))
 	for idx := range guards {
-		conditions[idx] = guards[idx].constraint
+		conditions[idx] = guards[idx].condition
 	}
-	conjunction := constraints.Conjunction(guard.constraint, conditions...)
+	conjunction := expressions.Conjunction(guard.condition, conditions...)
 	return NewGuard(conjunction)
 }
 
 // Finds the intersection of all variables and adds a disjunction term to them.
 func (guard Guard) Disjunction(guards ...Guard) Guard {
-	conditions := make([]constraints.Constraint, len(guards))
+	conditions := make([]expressions.Expression, len(guards))
 	for idx := range guards {
-		conditions[idx] = guards[idx].constraint
+		conditions[idx] = guards[idx].condition
 	}
-	disjunction := constraints.Disjunction(guard.constraint, conditions...)
-	return NewGuard(disjunction)
+	conjunction := expressions.Disjunction(guard.condition, conditions...)
+	return NewGuard(conjunction)
 }
 
 func (guard Guard) Negation() Guard {
-	negation := constraints.LogicalNegate(guard.constraint)
+	negation := expressions.LogicalNegate(guard.condition)
 	return NewGuard(negation)
 }
 
-func (guard Guard) IsSatisfiable(valuations expressions.Valuations[*z3.AST], solver *ConstraintSolver) bool {
-	return solver.Satisfies(valuations, guard.constraint)
+func (guard Guard) IsSatisfied(valuations expressions.Valuations[*z3.AST], solver *Interpreter) bool {
+	return solver.IsSatisfied(valuations, guard.condition)
+}
+
+func (guard Guard) IsSatisfiable(solver *Interpreter) bool {
+	return solver.IsSatisfiable(guard.condition)
 }
 
 func (guard Guard) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
-	printer := constraints.NewPrettyPrinter(&buffer, symbols)
-	printer.Constraint(guard.constraint)
+	printer := expressions.NewPrettyPrinter(&buffer, symbols)
+	printer.Expression(guard.condition)
 	return buffer.String()
 }

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 	"github.com/stretchr/testify/assert"
@@ -23,31 +22,29 @@ func Test_Name(t *testing.T) {
 	variables := expressions.NewVariablesMap[*z3.Sort]()
 	variables.Declare(x, context.IntegerSort())
 	variables.Declare(y, context.IntegerSort())
-	constraint := constraints.NewLogicalConstraint(
+	constraint := expressions.Disjunction(
+		expressions.NewBinary(
+			expressions.NewVariable(x),
+			expressions.GreaterThanEqual,
+			expressions.NewInteger(2),
+		),
 		expressions.Disjunction(
 			expressions.NewBinary(
-				expressions.NewVariable(x),
-				expressions.GreaterThanEqual,
-				expressions.NewInteger(2),
+				expressions.NewVariable(y),
+				expressions.LessThanEqual,
+				expressions.NewInteger(1),
 			),
-			expressions.Disjunction(
-				expressions.NewBinary(
-					expressions.NewVariable(y),
-					expressions.LessThanEqual,
-					expressions.NewInteger(1),
-				),
-				expressions.NewBinary(
-					expressions.NewVariable(y),
-					expressions.GreaterThanEqual,
-					expressions.NewInteger(3),
-				),
+			expressions.NewBinary(
+				expressions.NewVariable(y),
+				expressions.GreaterThanEqual,
+				expressions.NewInteger(3),
 			),
 		),
 	)
 	invariant := NewInvariant(constraint)
 
 	valuations := expressions.NewValuationsMap[*z3.AST]()
-	solver := NewConstraintSolver(context.NewSolver(), variables)
+	solver := NewInterpreter(context, variables)
 
 	for i := 0; i < 1000; i++ {
 		// Act

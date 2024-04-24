@@ -4,12 +4,12 @@ import "github.com/Brandhoej/gobion/pkg/symbols"
 
 type ExpressionVisitor interface {
 	Variable(variable Variable)
-	Valuation(valuation Valuation)
 	Binary(binary Binary)
 	Integer(integer Integer)
 	Boolean(boolean Boolean)
 	Unary(unary Unary)
 	IfThenElse(ite IfThenElse)
+	Assignment(assignment Assignment)
 }
 
 type Expression interface {
@@ -85,24 +85,6 @@ func (variable Variable) Accept(visitor ExpressionVisitor) {
 	visitor.Variable(variable)
 }
 
-type Valuation struct {
-	symbol symbols.Symbol
-}
-
-func NewValuation(symbol symbols.Symbol) Valuation {
-	return Valuation{
-		symbol: symbol,
-	}
-}
-
-func (valuation Valuation) Symbol() symbols.Symbol {
-	return valuation.symbol
-}
-
-func (valuation Valuation) Accept(visitor ExpressionVisitor) {
-	visitor.Valuation(valuation)
-}
-
 type BinaryExpressionOperator uint16
 
 const (
@@ -116,6 +98,7 @@ const (
 	LogicalOr        = BinaryExpressionOperator(7)
 	Addition         = BinaryExpressionOperator(8)
 	Subtraction      = BinaryExpressionOperator(9)
+	Implication      = BinaryExpressionOperator(10)
 )
 
 type Binary struct {
@@ -141,6 +124,12 @@ func (binary Binary) Operator() BinaryExpressionOperator {
 
 func (binary Binary) RHS() Expression {
 	return binary.rhs
+}
+
+func CastBinary[L, R any](lhs, rhs Expression) (l L, okL bool, r R, okR bool) {
+	l, okL = lhs.(L)
+	r, okR = rhs.(R)
+	return l, okL, r, okR
 }
 
 func Conjunction(expression Expression, expressions ...Expression) (conjunction Expression) {
@@ -219,4 +208,20 @@ func NewIfThenElse(condition, consequence, alternative Expression) IfThenElse {
 
 func (ite IfThenElse) Accept(visitor ExpressionVisitor) {
 	visitor.IfThenElse(ite)
+}
+
+type Assignment struct {
+	variable Variable
+	valuation Expression
+}
+
+func NewAssignment(variable Variable, valuation Expression) Assignment {
+	return Assignment{
+		variable: variable,
+		valuation: valuation,
+	}
+}
+
+func (assignment Assignment) Accept(visitor ExpressionVisitor) {
+	visitor.Assignment(assignment)
 }

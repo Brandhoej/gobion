@@ -34,11 +34,11 @@ func (edge Edge) Destination() graph.Key {
 	return edge.destination
 }
 
-func (edge Edge) IsEnabled(valuations expressions.Valuations[*z3.AST], solver *ConstraintSolver) bool {
-	return edge.guard.IsSatisfiable(valuations, solver)
+func (edge Edge) IsEnabled(valuations expressions.Valuations[*z3.AST], solver *Interpreter) bool {
+	return edge.guard.IsSatisfied(valuations, solver)
 }
 
-func (edge Edge) Traverse(state State, solver *ConstraintSolver) State {
+func (edge Edge) Traverse(state State, solver *Interpreter) State {
 	valuations := state.valuations.Copy()
 	return NewState(
 		edge.destination,

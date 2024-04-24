@@ -17,6 +17,6 @@ func NewLocation(name string, invariant Invariant) Location {
 	}
 }
 
-func (location Location) IsEnabled(valuations expressions.Valuations[*z3.AST], solver *ConstraintSolver) bool {
+func (location Location) IsEnabled(valuations expressions.Valuations[*z3.AST], solver *Interpreter) bool {
 	return location.invariant.IsSatisfiable(valuations, solver)
 }

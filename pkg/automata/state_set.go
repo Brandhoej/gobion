@@ -12,7 +12,7 @@ func NewStateSet() StateSet {
 	}
 }
 
-func (set StateSet) Insert(solver *ConstraintSolver, states ...State) (counter int) {
+func (set StateSet) Insert(solver *Interpreter, states ...State) (counter int) {
 	for _, state := range states {
 		if states, exists := set.states[state.location]; exists {
 			if set.Contains(state, solver) {
@@ -30,7 +30,7 @@ func (set StateSet) Insert(solver *ConstraintSolver, states ...State) (counter i
 	return counter
 }
 
-func (set StateSet) Contains(target State, solver *ConstraintSolver) bool {
+func (set StateSet) Contains(target State, solver *Interpreter) bool {
 	if states, exists := set.states[target.location]; exists {
 		for _, state := range states {
 			if target.SubsetOf(state, solver) {

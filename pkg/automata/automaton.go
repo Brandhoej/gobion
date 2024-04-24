@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/constraints"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/graph"
 	"github.com/Brandhoej/gobion/pkg/symbols"
@@ -15,7 +13,7 @@ var AngelicCompletion = func(location graph.Key, _ Guard) graph.Key {
 	return location
 }
 
-var AlwaysCompletion = func(destination graph.Key) func(graph.Key, Guard) graph.Key {
+var DirectedCompletion = func(destination graph.Key) func(graph.Key, Guard) graph.Key {
 	return func(graph.Key, Guard) graph.Key {
 		return destination
 	}
@@ -60,7 +58,7 @@ func (automaton *Automaton) Ingoing(location graph.Key) (edges []Edge) {
 	return automaton.graph.To(location)
 }
 
-func (automaton *Automaton) Complete(solver *ConstraintSolver, complete func(graph.Key, Guard) graph.Key) {
+func (automaton *Automaton) Complete(interpreter *Interpreter, complete func(graph.Key, Guard) graph.Key) {
 	automaton.Locations(func(source graph.Key, location Location) bool {
 		// The disjunction is the disjunction of all guards.
 		var disjunction Guard
@@ -76,26 +74,18 @@ func (automaton *Automaton) Complete(solver *ConstraintSolver, complete func(gra
 			}
 		} else {
 			// If there are not outgoing edges then we assume a false edge.
-			disjunction = NewGuard(
-				constraints.NewLogicalConstraint(
-					expressions.NewFalse(),
-				),
-			)
+			disjunction = NewGuard(expressions.NewFalse())
 		}
 
 		// Constrain by the location's invariant.
-		invariant := NewGuard(location.invariant.constraint)
+		invariant := NewGuard(location.invariant.condition)
 		missing := disjunction.Negation().Conjunction(invariant)
 
 		// If the negation of all didisjunctionsjoined edge guards constrained by the invariant
 		// still has a solution then we have a "missing" edge to the completion destination.
-		if missing.IsSatisfiable(expressions.NewValuationsMap[*z3.AST](), solver) {
+		if missing.IsSatisfiable(interpreter) {
 			destination := complete(source, missing)
-			update := NewUpdate(
-				constraints.NewLogicalConstraint(
-					expressions.NewTrue(),
-				),
-			)
+			update := NewUpdate(expressions.NewTrue())
 			edge := NewEdge(source, missing, update, destination)
 			automaton.graph.AddEdge(edge)
 		}
