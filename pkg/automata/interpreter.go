@@ -2,15 +2,15 @@ package automata
 
 import (
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 )
 
 type Interpreter struct {
 	context   *z3.Context
-	variables expressions.Variables[*z3.Sort]
+	variables language.Variables
 }
 
-func NewInterpreter(context *z3.Context, variables expressions.Variables[*z3.Sort]) *Interpreter {
+func NewInterpreter(context *z3.Context, variables language.Variables) *Interpreter {
 	return &Interpreter{
 		context:   context,
 		variables: variables,
@@ -18,29 +18,29 @@ func NewInterpreter(context *z3.Context, variables expressions.Variables[*z3.Sor
 }
 
 func (solver *Interpreter) Interpret(
-	valuations expressions.Valuations[*z3.AST],
-	expression expressions.Expression,
+	valuations language.Valuations,
+	expression language.Expression,
 ) {
-	interpreter := expressions.NewSymbolicInterpreter(
+	interpreter := language.NewSymbolicInterpreter(
 		solver.context, solver.variables, valuations,
 	)
-	interpreter.Interpret(expression)
+	interpreter.Expression(expression)
 }
 
 func (solver *Interpreter) IsSatisfied(
-	valuations expressions.Valuations[*z3.AST],
-	expression expressions.Expression,
+	valuations language.Valuations,
+	expression language.Expression,
 ) bool {
-	interpreter := expressions.NewSymbolicInterpreter(
+	interpreter := language.NewSymbolicInterpreter(
 		solver.context, solver.variables, valuations.Copy(),
 	)
 	return interpreter.Satisfies(expression)
 }
 
 func (interpreter *Interpreter) IsSatisfiable(
-	expression expressions.Expression,
+	expression language.Expression,
 ) bool {
-	translator := expressions.NewZ3Translator(
+	translator := language.NewZ3Translator(
 		interpreter.context, interpreter.variables,
 	)
 	translation := translator.Translate(expression)

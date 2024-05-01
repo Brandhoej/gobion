@@ -3,55 +3,54 @@ package automata
 import (
 	"bytes"
 
-	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 type Guard struct {
-	condition expressions.Expression
+	condition language.Expression
 }
 
-func NewGuard(condition expressions.Expression) Guard {
+func NewGuard(condition language.Expression) Guard {
 	return Guard{
 		condition: condition,
 	}
 }
 
 func NewTrueGuard() Guard {
-	return NewGuard(expressions.NewTrue())
+	return NewGuard(language.NewTrue())
 }
 
 func NewFalseGuard() Guard {
-	return NewGuard(expressions.NewFalse())
+	return NewGuard(language.NewFalse())
 }
 
 // Finds the union of all variables and adds conjunctive terms
 func (guard Guard) Conjunction(guards ...Guard) Guard {
-	conditions := make([]expressions.Expression, len(guards))
+	conditions := make([]language.Expression, len(guards))
 	for idx := range guards {
 		conditions[idx] = guards[idx].condition
 	}
-	conjunction := expressions.Conjunction(guard.condition, conditions...)
+	conjunction := language.Conjunction(guard.condition, conditions...)
 	return NewGuard(conjunction)
 }
 
 // Finds the intersection of all variables and adds a disjunction term to them.
 func (guard Guard) Disjunction(guards ...Guard) Guard {
-	conditions := make([]expressions.Expression, len(guards))
+	conditions := make([]language.Expression, len(guards))
 	for idx := range guards {
 		conditions[idx] = guards[idx].condition
 	}
-	conjunction := expressions.Disjunction(guard.condition, conditions...)
+	conjunction := language.Disjunction(guard.condition, conditions...)
 	return NewGuard(conjunction)
 }
 
 func (guard Guard) Negation() Guard {
-	negation := expressions.LogicalNegate(guard.condition)
+	negation := language.LogicalNegate(guard.condition)
 	return NewGuard(negation)
 }
 
-func (guard Guard) IsSatisfied(valuations expressions.Valuations[*z3.AST], solver *Interpreter) bool {
+func (guard Guard) IsSatisfied(valuations language.Valuations, solver *Interpreter) bool {
 	return solver.IsSatisfied(valuations, guard.condition)
 }
 
@@ -61,7 +60,7 @@ func (guard Guard) IsSatisfiable(solver *Interpreter) bool {
 
 func (guard Guard) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
-	printer := expressions.NewPrettyPrinter(&buffer, symbols)
+	printer := language.NewPrettyPrinter(&buffer, symbols)
 	printer.Expression(guard.condition)
 	return buffer.String()
 }

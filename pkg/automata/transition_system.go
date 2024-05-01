@@ -1,9 +1,6 @@
 package automata
 
-import (
-	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
-)
+import "github.com/Brandhoej/gobion/pkg/automata/language"
 
 type TransitionSystem struct {
 	solver    *Interpreter
@@ -16,7 +13,7 @@ func NewTransitionSystem(automaton *Automaton) *TransitionSystem {
 	}
 }
 
-func (system *TransitionSystem) Initial(valuations expressions.Valuations[*z3.AST]) State {
+func (system *TransitionSystem) Initial(valuations language.Valuations) State {
 	key := system.automaton.initial
 	location, _ := system.automaton.Location(key)
 	return NewState(key, valuations, location.invariant.condition)
@@ -48,7 +45,7 @@ func (system *TransitionSystem) Outgoing(state State) (successors []State) {
 	return successors
 }
 
-func (system *TransitionSystem) Reachability(solver *Interpreter, valuations expressions.Valuations[*z3.AST], search SearchStrategy, goals ...State) Trace {
+func (system *TransitionSystem) Reachability(solver *Interpreter, valuations language.Valuations, search SearchStrategy, goals ...State) Trace {
 	return search.For(
 		func(state State) bool {
 			// We have reached a goal when the locations are the same

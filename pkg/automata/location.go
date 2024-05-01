@@ -1,9 +1,6 @@
 package automata
 
-import (
-	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
-)
+import "github.com/Brandhoej/gobion/pkg/automata/language"
 
 type Location struct {
 	name      string
@@ -17,6 +14,6 @@ func NewLocation(name string, invariant Invariant) Location {
 	}
 }
 
-func (location Location) IsEnabled(valuations expressions.Valuations[*z3.AST], solver *Interpreter) bool {
+func (location Location) IsEnabled(valuations language.Valuations, solver *Interpreter) bool {
 	return location.invariant.IsSatisfiable(valuations, solver)
 }

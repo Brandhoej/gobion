@@ -3,15 +3,15 @@ package automata
 import (
 	"bytes"
 
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 type Update struct {
-	expression expressions.Expression
+	expression language.Expression
 }
 
-func NewUpdate(expression expressions.Expression) Update {
+func NewUpdate(expression language.Expression) Update {
 	return Update{
 		expression: expression,
 	}
@@ -19,17 +19,17 @@ func NewUpdate(expression expressions.Expression) Update {
 
 func NewEmptyUpdate() Update {
 	return Update{
-		expression: expressions.NewTrue(),
+		expression: language.NewTrue(),
 	}
 }
 
-func (update Update) Apply(expression expressions.Expression) expressions.Expression {
-	return expressions.Conjunction(update.expression, expression)
+func (update Update) Apply(expression language.Expression) language.Expression {
+	return language.Conjunction(update.expression, expression)
 }
 
 func (update Update) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
-	printer := expressions.NewPrettyPrinter(&buffer, symbols)
+	printer := language.NewPrettyPrinter(&buffer, symbols)
 	printer.Expression(update.expression)
 	return buffer.String()
 }

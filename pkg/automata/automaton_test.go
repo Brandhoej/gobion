@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
@@ -14,27 +14,30 @@ func TestCompletion(t *testing.T) {
 	context := z3.NewContext(z3.NewConfig())
 	symbols := symbols.NewSymbolsMap[any](symbols.NewSymbolsFactory())
 	x := symbols.Insert("x")
-	variables := expressions.NewVariablesMap[*z3.Sort]()
-	variables.Declare(x, context.IntegerSort())
+	variables := language.NewVariablesMap()
+	variables.Declare(x, language.IntegerSort)
 
 	builder := NewAutomatonBuilder()
 	initial := builder.AddInitial("Initial")
 	builder.AddLoop(initial,
 		WithGuard(
 			NewGuard(
-				expressions.NewBinary(
-					expressions.NewVariable(x), expressions.LessThanEqual, expressions.NewInteger(10),
+				language.NewBinary(
+					language.NewVariable(x), language.LessThanEqual, language.NewInteger(10),
 				),
 			),
 		),
 		WithUpdate(
 			NewUpdate(
-				expressions.NewAssignment(
-					expressions.NewVariable(x),
-					expressions.NewBinary(
-						expressions.NewVariable(x),
-						expressions.Addition,
-						expressions.NewInteger(1),
+				language.NewBlockExpression(
+					language.NewTrue(),
+					language.NewAssignment(
+						language.NewVariable(x),
+						language.NewBinary(
+							language.NewVariable(x),
+							language.Addition,
+							language.NewInteger(1),
+						),
 					),
 				),
 			),

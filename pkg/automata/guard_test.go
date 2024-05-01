@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/symbols"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,41 +19,41 @@ func Test_IsSatisfiable(t *testing.T) {
 		symbols.NewSymbolsFactory(),
 	)
 
-	variables := expressions.NewVariablesMap[*z3.Sort]()
+	variables := language.NewVariablesMap()
 	x, y := symbols.Insert("x"), symbols.Insert("y")
-	variables.Declare(x, context.IntegerSort())
-	variables.Declare(y, context.IntegerSort())
+	variables.Declare(x, language.IntegerSort)
+	variables.Declare(y, language.IntegerSort)
 
 	guard := NewGuard(
-		expressions.Disjunction(
-			expressions.NewBinary(
-				expressions.NewVariable(x),
-				expressions.GreaterThanEqual,
-				expressions.NewInteger(2),
+		language.Disjunction(
+			language.NewBinary(
+				language.NewVariable(x),
+				language.GreaterThanEqual,
+				language.NewInteger(2),
 			),
-			expressions.Disjunction(
-				expressions.NewBinary(
-					expressions.NewVariable(y),
-					expressions.LessThanEqual,
-					expressions.NewInteger(1),
+			language.Disjunction(
+				language.NewBinary(
+					language.NewVariable(y),
+					language.LessThanEqual,
+					language.NewInteger(1),
 				),
-				expressions.NewBinary(
-					expressions.NewVariable(y),
-					expressions.GreaterThanEqual,
-					expressions.NewInteger(3),
+				language.NewBinary(
+					language.NewVariable(y),
+					language.GreaterThanEqual,
+					language.NewInteger(3),
 				),
 			),
 		),
 	)
 
-	valuations := expressions.NewValuationsMap[*z3.AST]()
+	valuations := language.NewValuationsMap()
 	solver := NewInterpreter(context, variables)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 5000; i++ {
 		// Act
 		xVal, yVal := rand.Intn(1000)-500, rand.Intn(1000)-500
-		valuations.Assign(x, context.NewInt(xVal, context.IntegerSort()))
-		valuations.Assign(y, context.NewInt(yVal, context.IntegerSort()))
+		valuations.Assign(x, language.NewInteger(xVal))
+		valuations.Assign(y, language.NewInteger(yVal))
 		satisfiable := guard.IsSatisfied(valuations, solver)
 
 		// Assert

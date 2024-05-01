@@ -1,12 +1,9 @@
 package automata
 
 import (
-	"github.com/Brandhoej/gobion/internal/z3"
-	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
+	"github.com/Brandhoej/gobion/pkg/automata/language"
 	"github.com/Brandhoej/gobion/pkg/graph"
 )
-
-type EdgeDirection bool
 
 type Edge struct {
 	source      graph.Key
@@ -34,7 +31,7 @@ func (edge Edge) Destination() graph.Key {
 	return edge.destination
 }
 
-func (edge Edge) IsEnabled(valuations expressions.Valuations[*z3.AST], solver *Interpreter) bool {
+func (edge Edge) IsEnabled(valuations language.Valuations, solver *Interpreter) bool {
 	return edge.guard.IsSatisfied(valuations, solver)
 }
 
