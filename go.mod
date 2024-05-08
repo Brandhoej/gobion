@@ -14,6 +14,9 @@ require (
 	github.com/google/go-dap v0.12.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/kelindar/bitmap v1.5.2 // indirect
+	github.com/kelindar/simd v1.1.2 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect

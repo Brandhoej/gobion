@@ -44,12 +44,12 @@ func TestCompletion(t *testing.T) {
 		),
 	)
 	err := builder.AddLocation("Error", WithInvariant(NewFalseInvariant()))
-	automaton := builder.Build(symbols)
+	automaton := builder.Build()
 	automaton.Complete(NewInterpreter(context, variables), DirectedCompletion(err))
 
 	// Act
 	var buffer bytes.Buffer
-	automaton.DOT(&buffer)
+	automaton.DOT(&buffer, symbols)
 
 	// Assert
 	t.Log(buffer.String())

@@ -15,7 +15,7 @@ func TestSequentialPath(t *testing.T) {
 
 	// Act
 	first := NewGlobalPath(
-		NewLexicalScope(), context.NewTrue(),
+		NewLexicalScope(context), context.NewTrue(),
 	)
 	seocnd := first.Fork(context.NewTrue())
 	third := seocnd.Fork(context.NewFalse())
@@ -46,7 +46,7 @@ func TestBranchingPath(t *testing.T) {
 
 	// Act
 	a := NewGlobalPath(
-		NewLexicalScope(), context.NewTrue(),
+		NewLexicalScope(context), context.NewTrue(),
 	)
 	b := a.Fork(bc)
 	c := a.Fork(cc)
@@ -76,11 +76,11 @@ func TestBranchingValuations(t *testing.T) {
 	solver := context.NewSolver()
 	zero := context.NewInt(0, context.IntegerSort())
 	ten := context.NewInt(10, context.IntegerSort())
-	symbols := NewSymbolsMap()
+	symbols := NewSymbolsMap(NewSymbolsFactory())
 	xS, nS, mS := symbols.Insert("x"), symbols.Insert("n"), symbols.Insert("m")
 
 	// Act
-	a := NewGlobalPath(NewLexicalScope(), context.NewTrue())
+	a := NewGlobalPath(NewLexicalScope(context), context.NewTrue())
 	x := a.scope.Define(xS, context.IntegerSort())
 	a.scope.Declare(nS, zero)
 

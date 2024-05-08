@@ -1,14 +1,15 @@
 package automata
 
-import "github.com/Brandhoej/gobion/pkg/graph"
+import "github.com/Brandhoej/gobion/pkg/symbols"
+
 
 type StateSet struct {
-	states map[graph.Key][]State
+	states map[symbols.Symbol][]State
 }
 
 func NewStateSet() StateSet {
 	return StateSet{
-		states: make(map[graph.Key][]State),
+		states: make(map[symbols.Symbol][]State),
 	}
 }
 

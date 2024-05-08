@@ -2,25 +2,25 @@ package automata
 
 import "github.com/Brandhoej/gobion/pkg/automata/language"
 
-type TransitionSystem struct {
+type SymbolicTransitionSystem struct {
 	solver    *Interpreter
-	automaton *Automaton
+	automaton *SymbolicAutomaton
 }
 
-func NewTransitionSystem(automaton *Automaton) *TransitionSystem {
-	return &TransitionSystem{
+func NewTransitionSystem(automaton *SymbolicAutomaton) *SymbolicTransitionSystem {
+	return &SymbolicTransitionSystem{
 		automaton: automaton,
 	}
 }
 
-func (system *TransitionSystem) Initial(valuations language.Valuations) State {
+func (system *SymbolicTransitionSystem) Initial(valuations language.Valuations) State {
 	key := system.automaton.initial
 	location, _ := system.automaton.Location(key)
 	return NewState(key, valuations, location.invariant.condition)
 }
 
 // Returns all states from the state.
-func (system *TransitionSystem) Outgoing(state State) (successors []State) {
+func (system *SymbolicTransitionSystem) Outgoing(state State) (successors []State) {
 	if location, exists := system.automaton.Location(state.location); exists {
 		// We have found an inconsistency where the location is disabled.
 		// Meaning that even enabled edges wont be traversable.
@@ -45,7 +45,7 @@ func (system *TransitionSystem) Outgoing(state State) (successors []State) {
 	return successors
 }
 
-func (system *TransitionSystem) Reachability(solver *Interpreter, valuations language.Valuations, search SearchStrategy, goals ...State) Trace {
+func (system *SymbolicTransitionSystem) Reachability(solver *Interpreter, valuations language.Valuations, search SearchStrategy, goals ...State) Trace {
 	return search.For(
 		func(state State) bool {
 			// We have reached a goal when the locations are the same

@@ -2,18 +2,18 @@ package automata
 
 import (
 	"github.com/Brandhoej/gobion/pkg/automata/language"
-	"github.com/Brandhoej/gobion/pkg/graph"
+	"github.com/Brandhoej/gobion/pkg/symbols"
 )
 
 type Edge struct {
-	source      graph.Key
+	source      symbols.Symbol
 	guard       Guard
 	update      Update
-	destination graph.Key
+	destination symbols.Symbol
 }
 
 func NewEdge(
-	source graph.Key, guard Guard, update Update, destination graph.Key,
+	source symbols.Symbol, guard Guard, update Update, destination symbols.Symbol,
 ) Edge {
 	return Edge{
 		source:      source,
@@ -23,11 +23,11 @@ func NewEdge(
 	}
 }
 
-func (edge Edge) Source() graph.Key {
+func (edge Edge) Source() symbols.Symbol {
 	return edge.source
 }
 
-func (edge Edge) Destination() graph.Key {
+func (edge Edge) Destination() symbols.Symbol {
 	return edge.destination
 }
 
