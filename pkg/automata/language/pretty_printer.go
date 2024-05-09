@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/Brandhoej/gobion/pkg/symbols"
+	"github.com/Brandhoej/gobion/pkg/zones"
 )
 
 type PrettyPrinter struct {
@@ -26,40 +27,50 @@ func (printer PrettyPrinter) WriteString(text string) {
 	io.WriteString(printer.writer, text)
 }
 
-func (printer PrettyPrinter) Statement(statement Statement) {
-	switch cast := any(statement).(type) {
-	case Assignment:
-		printer.Assignment(cast)
-	default:
-		panic("Unknown statement type")
-	}
-}
-
 func (printer PrettyPrinter) Assignment(assignment Assignment) {
 	if variable, ok := assignment.lhs.(Variable); ok {
 		printer.Variable(variable)
 		printer.WriteString("' := ")
-		printer.Expression(assignment.rhs)
+		assignment.rhs.Accept(printer)
 	}
 }
 
-func (printer PrettyPrinter) Expression(expression Expression) {
-	switch cast := any(expression).(type) {
-	case Variable:
-		printer.Variable(cast)
-	case Binary:
-		printer.Binary(cast)
-	case Integer:
-		printer.Integer(cast)
-	case Boolean:
-		printer.Boolean(cast)
-	case Unary:
-		printer.Unary(cast)
-	case BlockExpression:
-		printer.BlockExpression(cast)
-	default:
-		panic("Unknown expression type")
+func (printer PrettyPrinter) ClockConstraint(constraint ClockConstraint) {
+	lhs, _ := printer.symbols.Item(constraint.lhs)
+	rhs, _ := printer.symbols.Item(constraint.rhs)
+	printer.WriteString(fmt.Sprintf("%s - %s", lhs, rhs))
+
+	if constraint.relation.Strictness() == zones.Strict {
+		printer.WriteString(" < ")
+	} else {
+		printer.WriteString(" ≤ ")
 	}
+
+	if constraint.relation.IsInfinity() {
+		printer.WriteString("∞")
+	} else {
+		printer.WriteString(fmt.Sprintf("%v", constraint.relation.Limit()))
+	}
+}
+
+func (printer PrettyPrinter) ClockAssignment(assignment ClockAssignment) {
+	lhs, _ := printer.symbols.Item(assignment.lhs)
+	rhs, _ := printer.symbols.Item(assignment.rhs)
+	printer.WriteString(fmt.Sprintf("%s := %s", lhs, rhs))
+}
+
+func (printer PrettyPrinter) ClockShift(shift ClockShift) {
+	clock, _ := printer.symbols.Item(shift.clock)
+	if shift.limit >= 0 {
+		printer.WriteString(fmt.Sprintf("%s += %v", clock, shift.limit))
+	} else {
+		printer.WriteString(fmt.Sprintf("%s -= %v", clock, -shift.limit))
+	}
+}
+
+func (printer PrettyPrinter) ClockReset(reset ClockReset) {
+	clock, _ := printer.symbols.Item(reset.clock)
+	printer.WriteString(fmt.Sprintf("%s := %v", clock, reset.limit))
 }
 
 func (printer PrettyPrinter) Variable(variable Variable) {
@@ -68,7 +79,7 @@ func (printer PrettyPrinter) Variable(variable Variable) {
 }
 
 func (printer PrettyPrinter) Binary(binary Binary) {
-	printer.Expression(binary.LHS())
+	binary.LHS().Accept(printer)
 	switch binary.Operator() {
 	case Equal:
 		printer.WriteString(" = ")
@@ -95,7 +106,11 @@ func (printer PrettyPrinter) Binary(binary Binary) {
 	default:
 		panic("Unknown binary operator")
 	}
-	printer.Expression(binary.RHS())
+	binary.RHS().Accept(printer)
+}
+
+func (printer PrettyPrinter) ClockCondition(condition ClockCondition) {
+	panic("Not implemented yet")
 }
 
 func (printer PrettyPrinter) Integer(integer Integer) {
@@ -118,16 +133,24 @@ func (printer PrettyPrinter) Unary(unary Unary) {
 		panic("Unknown unary operator")
 	}
 	printer.WriteString("(")
-	printer.Expression(unary.Operand())
+	unary.Operand().Accept(printer)
 	printer.WriteString(")")
 }
 
 func (printer PrettyPrinter) BlockExpression(block BlockExpression) {
 	printer.WriteString("{")
 	for idx := range block.statements {
-		printer.Statement(block.statements[idx])
+		block.statements[idx].Accept(printer)
 		printer.WriteString("; ")
 	}
-	printer.Expression(block.expression)
+	block.expression.Accept(printer)
 	printer.WriteString("}")
+}
+
+func (printer PrettyPrinter) IfThenElse(ite IfThenElse) {
+	ite.condition.Accept(printer)
+	printer.WriteString(" ? ")
+	ite.consequence.Accept(printer)
+	printer.WriteString(" : ")
+	ite.alternative.Accept(printer)
 }

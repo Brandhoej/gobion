@@ -30,6 +30,6 @@ func (update Update) Apply(expression language.Expression) language.Expression {
 func (update Update) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
 	printer := language.NewPrettyPrinter(&buffer, symbols)
-	printer.Expression(update.expression)
+	update.expression.Accept(printer)
 	return buffer.String()
 }

@@ -484,8 +484,8 @@ func (dbm DBM) Free(clocks ...Clock) {
 
 // Sets the clock to be assigned to its limit. This is expressed as {u[x=m] | u ∈ D}.
 func (dbm DBM) Reset(clock Clock, limit int) {
-	positive := NewRelation(limit, LessThanEqual)
-	negative := NewRelation(-limit, LessThanEqual)
+	positive := NewRelation(limit, Weak)
+	negative := NewRelation(-limit, Weak)
 	for dimension := Reference; dimension < dbm.clocks; dimension++ {
 		dbm.Constrain(clock, dimension, positive.Add(dbm.Lower(dimension)))
 		dbm.Constrain(dimension, clock, dbm.Upper(dimension).Add(negative))
@@ -507,8 +507,8 @@ func (dbm DBM) Assign(lhs, rhs Clock) {
 
 // Compound addition assignment of the clock "clock := clock + limit".
 func (dbm DBM) Shift(clock Clock, limit int) {
-	pos := NewRelation(limit, LessThanEqual)
-	neg := NewRelation(-limit, LessThanEqual)
+	pos := NewRelation(limit, Weak)
+	neg := NewRelation(-limit, Weak)
 	for i := Reference; i < dbm.clocks; i++ {
 		// For all, except the loop, we extend the bounds depending on whether the
 		// constraint describes if the clock is in front of or behind "i".
@@ -538,8 +538,8 @@ func (dbm DBM) Shift(clock Clock, limit int) {
 // If checking safety properties then this can only be used if there are NO difference constraints.
 func (dbm DBM) Norm(maximums ...int) {
 	for i := Clock(1); i < dbm.clocks; i++ {
-		pos := NewRelation(maximums[i-1], LessThanEqual)
-		neg := NewRelation(maximums[i-1], LessThan)
+		pos := NewRelation(maximums[i-1], Weak)
+		neg := NewRelation(maximums[i-1], Strict)
 
 		if dbm.Upper(i) > pos {
 			dbm.SetUpper(i, Infinity)

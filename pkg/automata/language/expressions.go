@@ -8,7 +8,7 @@ import (
 type ExpressionVisitor interface {
 	Variable(variable Variable)
 	Binary(binary Binary)
-	ClockConstraint(constraint ClockConstraint)
+	ClockCondition(condition ClockCondition)
 	Integer(integer Integer)
 	Boolean(boolean Boolean)
 	Unary(unary Unary)
@@ -153,17 +153,21 @@ func Disjunction(expression Expression, expressions ...Expression) (disjunction 
 	return disjunction
 }
 
-type ClockConstraint struct {
+type ClockCondition struct {
 	lhs, rhs symbols.Symbol
 	relation zones.Relation
 }
 
-func NewClockConstraint(lhs, rhs symbols.Symbol, relation zones.Relation) ClockConstraint {
-	return ClockConstraint{
-		lhs: lhs,
-		rhs: rhs,
+func NewClockCondition(lhs, rhs symbols.Symbol, relation zones.Relation) ClockCondition {
+	return ClockCondition{
+		lhs:      lhs,
+		rhs:      rhs,
 		relation: relation,
 	}
+}
+
+func (constraint ClockCondition) Accept(visitor ExpressionVisitor) {
+	visitor.ClockCondition(constraint)
 }
 
 type UnaryOperator uint16

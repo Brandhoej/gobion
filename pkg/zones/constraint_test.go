@@ -16,7 +16,7 @@ func Test_ElementLimit(t *testing.T) {
 		}
 
 		// Act
-		element := NewRelation(limit, LessThan)
+		element := NewRelation(limit, Strict)
 
 		// Assert
 		assert.Equal(t, element.Limit(), limit)
@@ -62,27 +62,27 @@ func Test_ElementAdd(t *testing.T) {
 		},
 		{
 			name: "(0, <) + (0, ≤) = (0, <)",
-			lhs:  NewRelation(0, LessThan),
+			lhs:  NewRelation(0, Strict),
 			rhs:  Zero,
-			sum:  NewRelation(0, LessThan),
+			sum:  NewRelation(0, Strict),
 		},
 		{
 			name: "(-1, ≤) + (1, ≤) = (0, ≤)",
-			lhs:  NewRelation(-1, LessThanEqual),
-			rhs:  NewRelation(1, LessThanEqual),
+			lhs:  NewRelation(-1, Weak),
+			rhs:  NewRelation(1, Weak),
 			sum:  Zero,
 		},
 		{
 			name: "(-1, <) + (1, ≤) = (0, <)",
-			lhs:  NewRelation(-1, LessThan),
-			rhs:  NewRelation(1, LessThanEqual),
-			sum:  NewRelation(0, LessThan),
+			lhs:  NewRelation(-1, Strict),
+			rhs:  NewRelation(1, Weak),
+			sum:  NewRelation(0, Strict),
 		},
 		{
 			name: "(-1, <) + (1, <) = (0, <)",
-			lhs:  NewRelation(-1, LessThan),
-			rhs:  NewRelation(1, LessThan),
-			sum:  NewRelation(0, LessThan),
+			lhs:  NewRelation(-1, Strict),
+			rhs:  NewRelation(1, Strict),
+			sum:  NewRelation(0, Strict),
 		},
 		{
 			name: "∞ + (0, ≤) = ∞",
@@ -109,13 +109,13 @@ func Test_ElementNegation(t *testing.T) {
 	}{
 		{
 			name:     "Zero negated just changes the relation",
-			element:  NewRelation(0, LessThan),
-			negation: NewRelation(0, LessThanEqual),
+			element:  NewRelation(0, Strict),
+			negation: NewRelation(0, Weak),
 		},
 		{
 			name:     "Limits are negated",
-			element:  NewRelation(1, LessThan),
-			negation: NewRelation(-1, LessThanEqual),
+			element:  NewRelation(1, Strict),
+			negation: NewRelation(-1, Weak),
 		},
 	}
 	for _, tt := range tests {

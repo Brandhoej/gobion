@@ -10,10 +10,10 @@ import (
 
 func fig11() DBM {
 	dbm := NewDBM(Clock(1+2), Infinity)
-	dbm.SetLower(Clock(1), NewRelation(-1, LessThan))
-	dbm.SetUpper(Clock(1), NewRelation(3, LessThan))
-	dbm.SetLower(Clock(2), NewRelation(-2, LessThan))
-	dbm.SetUpper(Clock(2), NewRelation(3, LessThan))
+	dbm.SetLower(Clock(1), NewRelation(-1, Strict))
+	dbm.SetUpper(Clock(1), NewRelation(3, Strict))
+	dbm.SetLower(Clock(2), NewRelation(-2, Strict))
+	dbm.SetUpper(Clock(2), NewRelation(3, Strict))
 	return dbm
 }
 
@@ -75,8 +75,8 @@ func Test_Fig11Reset(t *testing.T) {
 	dbm.Reset(Clock(1), 2)
 
 	// Assert
-	assert.Equal(t, dbm.Upper(Clock(1)), NewRelation(2, LessThanEqual))
-	assert.Equal(t, dbm.Lower(Clock(1)), NewRelation(-2, LessThanEqual))
+	assert.Equal(t, dbm.Upper(Clock(1)), NewRelation(2, Weak))
+	assert.Equal(t, dbm.Lower(Clock(1)), NewRelation(-2, Weak))
 }
 
 func Test_Fig11Assign(t *testing.T) {
@@ -87,7 +87,7 @@ func Test_Fig11Assign(t *testing.T) {
 	dbm.Assign(Clock(1), Clock(2))
 
 	// Assert
-	assert.Equal(t, dbm.Lower(Clock(1)), NewRelation(-2, LessThan))
+	assert.Equal(t, dbm.Lower(Clock(1)), NewRelation(-2, Strict))
 	assert.Equal(t, dbm.Constraint(Clock(1), Clock(2)), Zero)
 	assert.Equal(t, dbm.Constraint(Clock(2), Clock(1)), Zero)
 }
@@ -96,7 +96,7 @@ func Test_Fig11Constrain(t *testing.T) {
 	// Arrange
 	dbm := fig11()
 	constraint := NewConstraint(
-		Clock(1), Reference, NewRelation(2, LessThanEqual),
+		Clock(1), Reference, NewRelation(2, Weak),
 	)
 
 	// Act
@@ -137,10 +137,10 @@ func Test_Fig11Shift(t *testing.T) {
 func Test_foo(t *testing.T) {
 	// Arrange
 	dbm := NewDBM(Clock(1+2), Infinity)
-	dbm.SetLower(Clock(1), NewRelation(-3, LessThan))
-	dbm.SetUpper(Clock(1), NewRelation(5, LessThan))
-	dbm.SetLower(Clock(2), NewRelation(-1, LessThan))
-	dbm.SetUpper(Clock(2), NewRelation(2, LessThan))
+	dbm.SetLower(Clock(1), NewRelation(-3, Strict))
+	dbm.SetUpper(Clock(1), NewRelation(5, Strict))
+	dbm.SetLower(Clock(2), NewRelation(-1, Strict))
+	dbm.SetUpper(Clock(2), NewRelation(2, Strict))
 
 	// Act
 	var buffer bytes.Buffer

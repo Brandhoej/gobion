@@ -8,13 +8,13 @@ import (
 const (
 	// These describe relations as uint but are not the Relation type.
 	// The reason for this is that we can omit type conversions from Relation to uint then.
-	LessThan      = 0
-	LessThanEqual = 1
+	Strict = 0
+	Weak   = 1
 
 	// Represents a DBM element infinity (unbounded) relation between two clocks.
 	Infinity = Relation(math.MinInt)
 	// Represents a DBM element Zero (0, ≤) relation between two clocks.
-	Zero = Relation(LessThanEqual)
+	Zero = Relation(Weak)
 
 	// The clock (index) of the reference clock (0 clock) within the DBM.
 	Reference = Clock(0)
@@ -29,10 +29,10 @@ type Strictness uint
 
 // Returns a string for the relation which is either "<" or "≤".
 func (strictness Strictness) String() string {
-	if strictness == LessThan {
+	if strictness == Strict {
 		return "<"
 	}
-	if strictness == LessThanEqual {
+	if strictness == Weak {
 		return "≤"
 	}
 	panic("Unknown relation")
@@ -103,7 +103,7 @@ func (lhs Relation) Add(rhs Relation) Relation {
 
 	// First adding the lhs and rhs increases the limit.
 	// Then we ensure the tightest constraint that satisfies both constraints is kept.
-	return (lhs + rhs) - ((lhs & LessThanEqual) | (rhs & LessThanEqual))
+	return (lhs + rhs) - ((lhs & Weak) | (rhs & Weak))
 }
 
 // Returns the integer bounds, that is "n" of "i-j ~ n".
@@ -113,7 +113,7 @@ func (element Relation) Limit() int {
 
 // Returns the relation, that is "~" of "i-j ~ n".
 func (element Relation) Strictness() Strictness {
-	return Strictness(element & LessThanEqual)
+	return Strictness(element & Weak)
 }
 
 // Returns a pretty printed string of the element as a tuple if not infinity.

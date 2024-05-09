@@ -32,6 +32,6 @@ func (invariant Invariant) IsSatisfiable(valuations language.Valuations, solver 
 func (invariant Invariant) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
 	printer := language.NewPrettyPrinter(&buffer, symbols)
-	printer.Expression(invariant.condition)
+	invariant.condition.Accept(printer)
 	return buffer.String()
 }

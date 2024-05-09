@@ -61,6 +61,6 @@ func (guard Guard) IsSatisfiable(solver *Interpreter) bool {
 func (guard Guard) String(symbols symbols.Store[any]) string {
 	var buffer bytes.Buffer
 	printer := language.NewPrettyPrinter(&buffer, symbols)
-	printer.Expression(guard.condition)
+	guard.condition.Accept(printer)
 	return buffer.String()
 }
