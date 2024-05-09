@@ -51,9 +51,9 @@ func (interpreter *GoExpressionInterpreter) Binary(scope symbolic.Scope, valuati
 	// Logical operators on booleans.
 	case token.LAND: // &&
 		return z3.And(lhs, rhs)
-	case token.LOR:  // ||
+	case token.LOR: // ||
 		return z3.Or(lhs, rhs)
-	case token.XOR:  // ^
+	case token.XOR: // ^
 		return z3.Xor(lhs, rhs)
 
 	// Relational operators.

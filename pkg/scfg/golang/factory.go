@@ -10,16 +10,16 @@ import (
 )
 
 type factory struct {
-	flow   *cfg.Graph[ast.Stmt, ast.Expr]
-	scopes *scfg.Graph[ast.Stmt, ast.Expr]
-	labels map[string]int
-	gotos  map[string][]int
-	terminated map[int]any
-	loopEnds structures.Stack[int]
-	loopExits []int
+	flow         *cfg.Graph[ast.Stmt, ast.Expr]
+	scopes       *scfg.Graph[ast.Stmt, ast.Expr]
+	labels       map[string]int
+	gotos        map[string][]int
+	terminated   map[int]any
+	loopEnds     structures.Stack[int]
+	loopExits    []int
 	fallthroughs []int
-	block  int
-	withScopes bool
+	block        int
+	withScopes   bool
 }
 
 func new() *factory {
@@ -27,14 +27,14 @@ func new() *factory {
 	scopes := scfg.New(flow)
 	scopes.Into(scopes.Global(), flow.Entry())
 	return &factory{
-		flow:   flow,
-		scopes: scopes,
-		block:  flow.Entry(),
-		labels: map[string]int{},
-		gotos: map[string][]int{},
-		terminated: map[int]any{},
-		loopEnds: make(structures.Stack[int], 0),
-		loopExits: make(structures.Stack[int], 0),
+		flow:         flow,
+		scopes:       scopes,
+		block:        flow.Entry(),
+		labels:       map[string]int{},
+		gotos:        map[string][]int{},
+		terminated:   map[int]any{},
+		loopEnds:     make(structures.Stack[int], 0),
+		loopExits:    make(structures.Stack[int], 0),
 		fallthroughs: make([]int, 0),
 	}
 }
@@ -225,13 +225,12 @@ func (factory *factory) statement(statement ast.Stmt) {
 			end := factory.getBlock()
 			ends = append(ends, end)
 
-			
 			if Cidx > 0 {
 				for idx := range factory.fallthroughs {
 					factory.connect(factory.fallthroughs[idx], end, nil)
 				}
 				if len(factory.fallthroughs) > 0 {
-					factory.terminated[ends[Cidx - 1]] = nil
+					factory.terminated[ends[Cidx-1]] = nil
 				}
 				factory.fallthroughs = []int{}
 			}
@@ -270,17 +269,17 @@ func (factory *factory) statement(statement ast.Stmt) {
 		}
 
 		entryCondition := factory.condition(factory.getBlock(), condition)
-		
+
 		factory.zoomIn(factory.getBlock(), ast.NewIdent("true"))
 		factory.statement(cast.Body)
 		exit := factory.getBlock()
-		
+
 		if cast.Post != nil {
 			factory.proceed(outer)
 			factory.connectFrom(exit, nil)
 			factory.statement(cast.Post)
 		}
-		
+
 		factory.enterLoop(exit)
 		factory.jumpTo(factory.getBlock(), entryCondition)
 
@@ -314,18 +313,18 @@ func (factory *factory) statement(statement ast.Stmt) {
 			}
 		case token.GOTO:
 			label := cast.Label.Name
-			
+
 			// Backward declared label.
 			if destination, exists := factory.labels[label]; exists {
 				factory.connect(block, destination, nil)
 			} else {
 				// Forward declared label (Connection are deferred).
 				if _, exists := factory.gotos[label]; !exists {
-					factory.gotos[label] = []int{ block }
+					factory.gotos[label] = []int{block}
 				} else {
 					factory.gotos[label] = append(factory.gotos[label], block)
 				}
-					
+
 			}
 		case token.FALLTHROUGH:
 			factory.fallthroughs = append(factory.fallthroughs, block)
@@ -350,7 +349,7 @@ func (factory *factory) statement(statement ast.Stmt) {
 		if terminated {
 			return
 		}
-		
+
 		factory.append(statement)
 	}
 }

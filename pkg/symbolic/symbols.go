@@ -44,6 +44,6 @@ func (mapping *SymbolsMap) Lookup(identifier string) (symbol Symbol, exists bool
 }
 
 func (mapping *SymbolsMap) Identifier(symbol Symbol) (identifier string, exists bool) {
-	identifier, exists = mapping.symbols[symbol] 
+	identifier, exists = mapping.symbols[symbol]
 	return identifier, exists
 }

@@ -66,7 +66,6 @@ func Test(t *testing.T) {
 	scfg := New(cfg)
 	scfg.Into(scfg.Global(), cfg.Entry(), post)
 	scfg.Into(scfg.ZoomIn(scfg.Global()), body)
-	
 
 	// Act
 	var buffer bytes.Buffer

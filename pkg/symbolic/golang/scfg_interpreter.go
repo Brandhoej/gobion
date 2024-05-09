@@ -62,7 +62,7 @@ func (interpreter *scfgInterpreter) Block(
 	path *symbolic.Path, scopes *scfg.Graph[ast.Stmt, ast.Expr], block int,
 ) *symbolic.Path {
 	cfg := scopes.CFG()
-	
+
 	if block == cfg.Exit() {
 		return path
 	}
@@ -73,7 +73,7 @@ func (interpreter *scfgInterpreter) Block(
 	}
 
 	path = interpreter.Join(path, block)
-	
+
 	if !path.IsFeasible() {
 		return path
 	}

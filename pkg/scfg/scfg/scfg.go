@@ -20,7 +20,7 @@ type Graph[S any, E comparable] struct {
 
 func New[S any, E comparable](flow *cfg.Graph[S, E]) *Graph[S, E] {
 	global := &scope[S, E]{
-		parent: 0,
+		parent:   0,
 		children: make([]int, 0),
 	}
 	return &Graph[S, E]{
@@ -74,11 +74,11 @@ func (graph *Graph[S, E]) ScopeWith(block int) (int, bool) {
 
 func (graph *Graph[S, E]) ZoomIn(parent int) int {
 	child := &scope[S, E]{
-		parent: parent,
+		parent:   parent,
 		children: make([]int, 0),
 	}
 	graph.scopes = append(graph.scopes, child)
-	childID := len(graph.scopes)-1
+	childID := len(graph.scopes) - 1
 	scope := graph.scopes[parent]
 	scope.children = append(scope.children, childID)
 	return childID

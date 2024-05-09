@@ -126,7 +126,7 @@ func (element Relation) String() string {
 
 // Represents a constraint between two clocks i and j: "i-j ~ n".
 type Constraint struct {
-	i, j Clock
+	i, j     Clock
 	relation Relation
 }
 
@@ -141,8 +141,8 @@ func (constraint Constraint) Destination() Clock {
 // Constructs a new constraint with a relation between the two clocks i and j.
 func NewConstraint(i, j Clock, relation Relation) Constraint {
 	return Constraint{
-		i: i,
-		j: j,
+		i:        i,
+		j:        j,
 		relation: relation,
 	}
 }

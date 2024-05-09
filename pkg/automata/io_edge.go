@@ -11,7 +11,7 @@ func NewIOEdge(
 	source symbols.Symbol, action Action, guard Guard, update Update, destination symbols.Symbol,
 ) IOEdge {
 	return IOEdge{
-		Edge: NewEdge(source, guard, update, destination),
+		Edge:   NewEdge(source, guard, update, destination),
 		action: action,
 	}
 }

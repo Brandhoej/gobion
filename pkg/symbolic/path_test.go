@@ -50,7 +50,7 @@ func TestBranchingPath(t *testing.T) {
 	)
 	b := a.Fork(bc)
 	c := a.Fork(cc)
-	
+
 	b.Join(c)
 
 	// Assert

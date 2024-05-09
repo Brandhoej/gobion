@@ -20,12 +20,12 @@ func NewDBM(clocks Clock, filler Relation) DBM {
 	if clocks == 0 {
 		panic("DBM require at least one clock that can be the reference clock")
 	}
-	
+
 	cardinality := clocks * clocks
 	data := make([]Relation, cardinality)
 	dbm := DBM{
 		clocks: clocks,
-		data: data,
+		data:   data,
 	}
 
 	for row := Reference; row < dbm.clocks; row++ {
@@ -45,11 +45,11 @@ func NewDBM(clocks Clock, filler Relation) DBM {
 
 // Creates a new copy of the DBM.
 func (dbm DBM) Copy() DBM {
-	data := make([]Relation, dbm.clocks * dbm.clocks)
+	data := make([]Relation, dbm.clocks*dbm.clocks)
 	copy(data, dbm.data)
 	return DBM{
 		clocks: dbm.clocks,
-		data: data,
+		data:   data,
 	}
 }
 
@@ -71,8 +71,8 @@ func (dbm DBM) Constraint(row, column Clock) Relation {
 }
 
 // Sets the constraint of the row/column.
-func (dbm DBM) Constrain(row, column Clock, element Relation) {
-	dbm.data[dbm.Index(row, column)] = element
+func (dbm DBM) Constrain(row, column Clock, relation Relation) {
+	dbm.data[dbm.Index(row, column)] = relation
 }
 
 // closes the DBm by applying floyds algorithm on it.
@@ -241,7 +241,7 @@ func (dbm DBM) Close() {
 				if pathIK.IsInfinity() {
 					continue
 				}
-	
+
 				pathKJ := dbm.Constraint(k, j)
 				if pathKJ.IsInfinity() {
 					continue
@@ -275,7 +275,7 @@ func (dbm DBM) Reduction() graph.Edges[Clock, Constraint] {
 				if pathIK.IsInfinity() {
 					continue
 				}
-	
+
 				pathKJ := dbm.Constraint(k, j)
 				if pathKJ.IsInfinity() {
 					continue
@@ -312,7 +312,7 @@ func (dbm DBM) IsClosed() bool {
 				if pathRowI.IsInfinity() {
 					continue
 				}
-	
+
 				pathIColumn := dbm.Constraint(i, column)
 				if pathIColumn.IsInfinity() {
 					continue
@@ -534,7 +534,7 @@ func (dbm DBM) Shift(clock Clock, limit int) {
 
 // Removes all upper bounds higher than the maximal constants and lower
 // all lower bounds higher than the maximal constants down to the maximal constants.
-// 
+//
 // If checking safety properties then this can only be used if there are NO difference constraints.
 func (dbm DBM) Norm(maximums ...int) {
 	for i := Clock(1); i < dbm.clocks; i++ {

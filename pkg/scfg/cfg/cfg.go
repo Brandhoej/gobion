@@ -18,17 +18,17 @@ type jump[S any, E comparable] struct {
 }
 
 type Graph[S any, E comparable] struct {
-	blocks []*block[S, E]
-	conditions []*condition[S, E]
-	jumps []*jump[S, E]
-	entry, exit  int
+	blocks      []*block[S, E]
+	conditions  []*condition[S, E]
+	jumps       []*jump[S, E]
+	entry, exit int
 }
 
 func New[S any, E comparable](statements ...S) *Graph[S, E] {
 	graph := &Graph[S, E]{
-		blocks: make([]*block[S, E], 0, 2),
+		blocks:     make([]*block[S, E], 0, 2),
 		conditions: make([]*condition[S, E], 0, 2),
-		jumps: make([]*jump[S, E], 0),
+		jumps:      make([]*jump[S, E], 0),
 	}
 	graph.entry, _ = graph.NewBlock(statements...)
 	graph.exit = -1
@@ -36,9 +36,9 @@ func New[S any, E comparable](statements ...S) *Graph[S, E] {
 }
 
 func (graph *Graph[S, E]) NewBlock(statements ...S) (int, int) {
-	block := &block[S, E]{ statements: statements }
+	block := &block[S, E]{statements: statements}
 	graph.blocks = append(graph.blocks, block)
-	id := len(graph.blocks)-1
+	id := len(graph.blocks) - 1
 	condition := graph.JumpTo(id, graph.NewUnconstainedCondition())
 	return id, condition
 }
@@ -49,7 +49,7 @@ func (graph *Graph[S, E]) NewCondition(expression E, jumps ...int) int {
 		jumps:      jumps,
 	}
 	graph.conditions = append(graph.conditions, condition)
-	return len(graph.conditions)-1
+	return len(graph.conditions) - 1
 }
 
 func (graph *Graph[S, E]) NewUnconstainedCondition(jumps ...int) int {
@@ -63,7 +63,7 @@ func (graph *Graph[S, E]) NewConditionalJump(expression E, destination int) int 
 		destination: destination,
 	}
 	graph.jumps = append(graph.jumps, jump)
-	return len(graph.jumps)-1
+	return len(graph.jumps) - 1
 }
 
 func (graph *Graph[S, E]) NewUnconditionalJump(destination int) int {

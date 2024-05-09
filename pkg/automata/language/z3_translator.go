@@ -6,8 +6,8 @@ import (
 )
 
 type Z3Translator struct {
-	context    *z3.Context
-	variables  Variables
+	context   *z3.Context
+	variables Variables
 }
 
 func NewZ3Translator(
@@ -15,7 +15,7 @@ func NewZ3Translator(
 	variables Variables,
 ) Z3Translator {
 	return Z3Translator{
-		context: context,
+		context:   context,
 		variables: variables,
 	}
 }
@@ -85,7 +85,7 @@ func (translator Z3Translator) binary(binary Binary) *z3.AST {
 		return z3.Or(lhs, rhs)
 	case Implication:
 		return z3.Implies(lhs, rhs)
-	}	
+	}
 	panic("Unknown binary operator")
 }
 

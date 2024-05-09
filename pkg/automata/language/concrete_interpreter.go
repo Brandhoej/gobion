@@ -1,7 +1,7 @@
 package language
 
 type ConcreteInterpreter struct {
-	variables Variables
+	variables  Variables
 	valuations Valuations
 }
 
@@ -10,7 +10,7 @@ func NewConcreteInterpreter(
 	valuations Valuations,
 ) ConcreteInterpreter {
 	return ConcreteInterpreter{
-		variables: variables,
+		variables:  variables,
 		valuations: valuations,
 	}
 }
@@ -173,7 +173,7 @@ func (interpreter ConcreteInterpreter) binary(binary Binary) Expression {
 		}
 
 		panic("Cannot perform OR")
-	}	
+	}
 	panic("Unknown binary operator")
 }
 

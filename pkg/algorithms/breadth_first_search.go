@@ -9,7 +9,7 @@ func BFS[T any](
 	roots ...T,
 ) {
 	queue := make(structures.Queue[structures.LinkedNode[T]], 0)
-	
+
 	for _, root := range roots {
 		node := structures.NewLinkedNode(nil, root)
 		queue.Enqueue(node)
@@ -18,11 +18,11 @@ func BFS[T any](
 	for !queue.IsEmpty() {
 		parent := queue.Dequeue()
 
-		for _, successor := range successors(parent.Data) {			
+		for _, successor := range successors(parent.Data) {
 			if !visited(successor) {
 				node := structures.NewLinkedNode(&parent, successor)
 				queue.Enqueue(node)
-				
+
 				if !yield(node) {
 					return
 				}

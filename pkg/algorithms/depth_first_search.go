@@ -9,7 +9,7 @@ func DFS[T any](
 	roots ...T,
 ) {
 	stack := make(structures.Stack[structures.LinkedNode[T]], 0)
-	
+
 	for _, root := range roots {
 		node := structures.NewLinkedNode(nil, root)
 		stack.Push(node)
@@ -18,11 +18,11 @@ func DFS[T any](
 	for !stack.IsEmpty() {
 		parent := stack.Pop()
 
-		for _, successor := range successors(parent.Data) {			
+		for _, successor := range successors(parent.Data) {
 			if !visited(successor) {
 				node := structures.NewLinkedNode(&parent, successor)
 				stack.Push(node)
-				
+
 				if !yield(node) {
 					return
 				}

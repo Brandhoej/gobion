@@ -58,6 +58,11 @@ func (interpreter *SymbolicInterpreter) solver() *z3.Solver {
 	return interpreter.z3solver
 }
 
+func (interpreter *SymbolicInterpreter) constrain(condition *z3.AST) {
+	interpreter.pc = z3.And(interpreter.pc, condition)
+	interpreter.z3solver = nil
+}
+
 func (interpreter *SymbolicInterpreter) isTrue(expression *z3.AST) bool {
 	return interpreter.solver().Proven(z3.Eq(expression, interpreter.solver().True()))
 }
@@ -90,9 +95,11 @@ func (interpreter *SymbolicInterpreter) Statement(statement Statement) {
 }
 
 func (interpreter *SymbolicInterpreter) Assignment(assignment Assignment) {
-	symbol := assignment.variable.Symbol()
-	interpreter.valuations.Assign(symbol, assignment.valuation)
-	interpreter.z3solver = nil
+	if variable, ok := assignment.lhs.(Variable); ok {
+		symbol := variable.Symbol()
+		interpreter.valuations.Assign(symbol, assignment.rhs)
+		interpreter.z3solver = nil
+	}
 }
 
 func (interpreter *SymbolicInterpreter) Expression(expression Expression) *z3.AST {
@@ -158,7 +165,7 @@ func (interpreter *SymbolicInterpreter) Binary(binary Binary) *z3.AST {
 	case Equal:
 		lhs, rhs := interpreter.rightToLeft(binary.lhs, binary.rhs)
 		equality := z3.Eq(lhs, rhs)
-		interpreter.pc = z3.And(interpreter.pc, equality)
+		interpreter.constrain(equality)
 		equal := interpreter.canBeTrue(equality)
 		return interpreter.context.NewBoolean(equal)
 	case NotEqual:
@@ -235,8 +242,19 @@ func (interpreter *SymbolicInterpreter) Unary(unary Unary) *z3.AST {
 
 func (interpreter *SymbolicInterpreter) IfThenElse(ite IfThenElse) *z3.AST {
 	condition := interpreter.Expression(ite.condition)
-	if interpreter.isTrue(condition) {
+	tautology, contradiction := interpreter.isTrue(condition), interpreter.isFalse(condition)
+	if tautology {
 		return interpreter.Expression(ite.consequence)
+	} else if !(tautology || contradiction) {
+		// we could get a determinate response (true or false).
+		// It can therefore be both leaving a partial evaluation.
+		pc := interpreter.pc
+		interpreter.constrain(condition)
+		consequence := interpreter.Expression(ite.consequence)
+		interpreter.constrain(z3.Not(condition))
+		alternative := interpreter.Expression(ite.alternative)
+		interpreter.pc = pc
+		return z3.ITE(condition, consequence, alternative)
 	}
 	return interpreter.Expression(ite.alternative)
 }

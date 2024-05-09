@@ -11,9 +11,9 @@ import (
 )
 
 type DOT[S any, E comparable] struct {
-	BlockIDs map[int]int
-	ConditionIDs map[int]int
-	statementStringer func(S) string
+	BlockIDs           map[int]int
+	ConditionIDs       map[int]int
+	statementStringer  func(S) string
 	expressionStringer func(E) string
 }
 
@@ -22,9 +22,9 @@ func NewDOT[S any, E comparable](
 	expressionStringer func(E) string,
 ) *DOT[S, E] {
 	return &DOT[S, E]{
-		BlockIDs: map[int]int{},
-		ConditionIDs: map[int]int{},
-		statementStringer: statementStringer,
+		BlockIDs:           map[int]int{},
+		ConditionIDs:       map[int]int{},
+		statementStringer:  statementStringer,
 		expressionStringer: expressionStringer,
 	}
 }

@@ -23,37 +23,36 @@ type Scope interface {
 }
 
 type LexicalScope struct {
-	context *z3.Context
-	parent *LexicalScope
+	context        *z3.Context
+	parent         *LexicalScope
 	symbolsFactory *SymbolsFactory
-	symbols Symbols
-	variables Variables
-	valuations Valuations
+	symbols        Symbols
+	variables      Variables
+	valuations     Valuations
 }
 
 func NewLexicalScope(context *z3.Context) *LexicalScope {
 	symbolsFactory := NewSymbolsFactory()
 	return &LexicalScope{
-		parent: nil,
-		context: context,
+		parent:         nil,
+		context:        context,
 		symbolsFactory: symbolsFactory,
-		symbols: NewSymbolsMap(symbolsFactory),
-		variables: NewVariablesMap(),
-		valuations: NewValuationsMap(),
+		symbols:        NewSymbolsMap(symbolsFactory),
+		variables:      NewVariablesMap(),
+		valuations:     NewValuationsMap(),
 	}
 }
 
 func (scope *LexicalScope) Branch() (branch Scope) {
 	return &LexicalScope{
-		parent: scope,
-		context: scope.context,
+		parent:         scope,
+		context:        scope.context,
 		symbolsFactory: scope.symbolsFactory,
-		symbols: NewSymbolsMap(scope.symbolsFactory),
-		variables: NewVariablesMap(),
-		valuations: NewValuationsMap(),
+		symbols:        NewSymbolsMap(scope.symbolsFactory),
+		variables:      NewVariablesMap(),
+		valuations:     NewValuationsMap(),
 	}
 }
-
 
 func (scope *LexicalScope) Bind(identifier string) (symbol Symbol) {
 	return scope.symbols.Insert(identifier)
@@ -88,7 +87,7 @@ func (scope *LexicalScope) Declare(symbol Symbol, valuation *z3.AST) *z3.AST {
 	if variable := scope.variables.Get(symbol); variable != nil {
 		return nil
 	}
-	
+
 	// Assign a value to the new declaration in this scope.
 	scope.valuations.Store(symbol, valuation)
 	return scope.variables.Declare(symbol, valuation.Sort())

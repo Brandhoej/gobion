@@ -2,12 +2,10 @@ package automata
 
 import (
 	"testing"
-
 	/*"github.com/Brandhoej/gobion/internal/z3"
 	"github.com/Brandhoej/gobion/pkg/automata/language/expressions"
 	"github.com/Brandhoej/gobion/pkg/symbols"
-	"github.com/stretchr/testify/assert"*/
-)
+	"github.com/stretchr/testify/assert"*/)
 
 func Test_Apply(t *testing.T) {
 	// Arrange

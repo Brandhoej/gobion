@@ -22,14 +22,14 @@ type CallInterpreter interface {
 }
 
 type SCFG[S any, E comparable] struct {
-	context *z3.Context
-	graph scfg.Graph[S, E]
-	statements StatementInterpreter[S]
+	context     *z3.Context
+	graph       scfg.Graph[S, E]
+	statements  StatementInterpreter[S]
 	expressions ExpressionInterpreter[E]
 }
 
 type work struct {
-	path *Path
+	path  *Path
 	block int
 }
 
@@ -40,9 +40,9 @@ func NewSCFG[S any, E comparable](
 	expressions ExpressionInterpreter[E],
 ) *SCFG[S, E] {
 	return &SCFG[S, E]{
-		context: context,
-		graph: graph,
-		statements: statements,
+		context:     context,
+		graph:       graph,
+		statements:  statements,
 		expressions: expressions,
 	}
 }
@@ -72,7 +72,7 @@ func (scfg *SCFG[S, E]) Interpret(path *Path) (*Path, []*z3.AST) {
 
 	worklist := make(structures.Queue[*work], 0)
 	worklist.Enqueue(&work{
-		path: path,
+		path:  path,
 		block: cfg.Entry(),
 	})
 
@@ -130,7 +130,7 @@ func (scfg *SCFG[S, E]) Interpret(path *Path) (*Path, []*z3.AST) {
 			fork := front.path.Fork(guard)
 			_, destination := cfg.Jump(jump)
 			worklist.Enqueue(&work{
-				path: fork,
+				path:  fork,
 				block: destination,
 			})
 		}

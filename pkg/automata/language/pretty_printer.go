@@ -8,7 +8,7 @@ import (
 )
 
 type PrettyPrinter struct {
-	writer io.Writer
+	writer  io.Writer
 	symbols symbols.Store[any]
 }
 
@@ -17,7 +17,7 @@ func NewPrettyPrinter(
 	symbols symbols.Store[any],
 ) PrettyPrinter {
 	return PrettyPrinter{
-		writer: writer,
+		writer:  writer,
 		symbols: symbols,
 	}
 }
@@ -36,9 +36,11 @@ func (printer PrettyPrinter) Statement(statement Statement) {
 }
 
 func (printer PrettyPrinter) Assignment(assignment Assignment) {
-	printer.Variable(assignment.variable)
-	printer.WriteString("' := ")
-	printer.Expression(assignment.valuation)
+	if variable, ok := assignment.lhs.(Variable); ok {
+		printer.Variable(variable)
+		printer.WriteString("' := ")
+		printer.Expression(assignment.rhs)
+	}
 }
 
 func (printer PrettyPrinter) Expression(expression Expression) {

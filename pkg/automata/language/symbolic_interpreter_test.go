@@ -70,7 +70,36 @@ func Test_SymbolicInterpretation(t *testing.T) {
 				NewInteger(1),
 				NewInteger(2),
 			),
-			expected: context.NewInt(2, context.IntegerSort()),
+			expected: z3.ITE(
+				z3.GT(xConst, context.NewInt(0, context.IntegerSort())),
+				context.NewInt(1, context.IntegerSort()),
+				context.NewInt(2, context.IntegerSort()),
+			),
+		},
+		{
+			name: "x>0 ? (x>0 ? 0 : 1) : 2",
+			expression: NewIfThenElse(
+				NewBinary(
+					NewVariable(x),
+					GreaterThan,
+					NewInteger(0),
+				),
+				NewIfThenElse(
+					NewBinary(
+						NewVariable(x),
+						GreaterThan,
+						NewInteger(0),
+					),
+					NewInteger(0),
+					NewInteger(1),
+				),
+				NewInteger(2),
+			),
+			expected: z3.ITE(
+				z3.GT(xConst, context.NewInt(0, context.IntegerSort())),
+				context.NewInt(0, context.IntegerSort()),
+				context.NewInt(2, context.IntegerSort()),
+			),
 		},
 		{
 			name: "x=2",

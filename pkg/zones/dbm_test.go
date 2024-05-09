@@ -150,3 +150,16 @@ func Test_foo(t *testing.T) {
 	fmt.Println(buffer.String())
 	t.Fail()
 }
+
+func Test_bar(t *testing.T) {
+	// Arrange
+	dbm := NewDBM(Clock(1+2), Zero)
+
+	// Act
+	var buffer bytes.Buffer
+	dbm.WriteConjunctions(&buffer, "x", "y")
+
+	// Assert
+	fmt.Println(buffer.String())
+	t.Fail()
+}

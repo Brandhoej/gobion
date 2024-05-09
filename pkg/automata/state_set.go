@@ -2,7 +2,6 @@ package automata
 
 import "github.com/Brandhoej/gobion/pkg/symbols"
 
-
 type StateSet struct {
 	states map[symbols.Symbol][]State
 }

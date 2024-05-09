@@ -10,15 +10,15 @@ import (
 
 type IOAutomaton struct {
 	Automaton[Location, IOEdge]
-	inputs []Action
+	inputs  []Action
 	outputs []Action
 }
 
 func NewIOAutomaton(automaton Automaton[Location, IOEdge], inputs, outputs []Action) *IOAutomaton {
 	return &IOAutomaton{
 		Automaton: automaton,
-		inputs: inputs,
-		outputs: outputs,
+		inputs:    inputs,
+		outputs:   outputs,
 	}
 }
 

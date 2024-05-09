@@ -1,10 +1,14 @@
 package language
 
-import "github.com/Brandhoej/gobion/pkg/symbols"
+import (
+	"github.com/Brandhoej/gobion/pkg/symbols"
+	"github.com/Brandhoej/gobion/pkg/zones"
+)
 
 type ExpressionVisitor interface {
 	Variable(variable Variable)
 	Binary(binary Binary)
+	ClockConstraint(constraint ClockConstraint)
 	Integer(integer Integer)
 	Boolean(boolean Boolean)
 	Unary(unary Unary)
@@ -147,6 +151,19 @@ func Disjunction(expression Expression, expressions ...Expression) (disjunction 
 		disjunction = NewBinary(disjunction, LogicalOr, expressions[idx])
 	}
 	return disjunction
+}
+
+type ClockConstraint struct {
+	lhs, rhs symbols.Symbol
+	relation zones.Relation
+}
+
+func NewClockConstraint(lhs, rhs symbols.Symbol, relation zones.Relation) ClockConstraint {
+	return ClockConstraint{
+		lhs: lhs,
+		rhs: rhs,
+		relation: relation,
+	}
 }
 
 type UnaryOperator uint16
