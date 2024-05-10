@@ -10,11 +10,11 @@ type Automaton[L graph.Vertex, E graph.Edge[symbols.Symbol]] struct {
 	initial symbols.Symbol
 }
 
-func NewAutomaton(
-	graph *graph.LabeledDirected[symbols.Symbol, Edge, Location],
+func NewAutomaton[L graph.Vertex, E graph.Edge[symbols.Symbol]](
+	graph *graph.LabeledDirected[symbols.Symbol, E, L],
 	initial symbols.Symbol,
-) *Automaton[Location, Edge] {
-	return &Automaton[Location, Edge]{
+) *Automaton[L, E] {
+	return &Automaton[L, E]{
 		graph:   graph,
 		initial: initial,
 	}

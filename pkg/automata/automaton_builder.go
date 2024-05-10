@@ -57,28 +57,22 @@ func WithUpdate(update Update) EdgeConfiguration {
 	}
 }
 
-type AutomatonBuilder struct {
+type SymbolicAutomatonBuilder struct {
 	initial   symbols.Symbol
 	locations graph.Vertices[symbols.Symbol, Location]
 	edges     graph.Edges[symbols.Symbol, Edge]
 	factory   *symbols.SymbolsFactory
 }
 
-func NewAutomatonBuilder() *AutomatonBuilder {
-	return &AutomatonBuilder{
+func NewAutomatonBuilder() *SymbolicAutomatonBuilder {
+	return &SymbolicAutomatonBuilder{
 		locations: graph.NewVertexMap[symbols.Symbol, Location](),
 		edges:     graph.NewEdgesMap[symbols.Symbol, Edge](),
 		factory:   symbols.NewSymbolsFactory(),
 	}
 }
 
-func (builder *AutomatonBuilder) AddInitial(name string, configs ...LocationConfiguration) symbols.Symbol {
-	key := builder.AddLocation(name, configs...)
-	builder.initial = key
-	return key
-}
-
-func (builder *AutomatonBuilder) AddLocation(name string, configs ...LocationConfiguration) symbols.Symbol {
+func (builder *SymbolicAutomatonBuilder) AddLocation(name string, configs ...LocationConfiguration) symbols.Symbol {
 	config := NewLocationConfig(configs...)
 	location := NewLocation(name, config.invariant)
 	symbol := symbols.Symbol(builder.factory.Next())
@@ -86,19 +80,23 @@ func (builder *AutomatonBuilder) AddLocation(name string, configs ...LocationCon
 	return key
 }
 
-func (builder *AutomatonBuilder) AddEdge(source, destination symbols.Symbol, configs ...EdgeConfiguration) {
+func (builder *SymbolicAutomatonBuilder) AddInitial(name string, configs ...LocationConfiguration) symbols.Symbol {
+	key := builder.AddLocation(name, configs...)
+	builder.initial = key
+	return key
+}
+
+func (builder *SymbolicAutomatonBuilder) AddEdge(source, destination symbols.Symbol, configs ...EdgeConfiguration) {
 	config := NewEdgeConfig(configs...)
 	edge := NewEdge(source, config.guard, config.update, destination)
 	builder.edges.Connect(edge)
 }
 
-func (builder *AutomatonBuilder) AddLoop(location symbols.Symbol, configs ...EdgeConfiguration) {
+func (builder *SymbolicAutomatonBuilder) AddLoop(location symbols.Symbol, configs ...EdgeConfiguration) {
 	builder.AddEdge(location, location, configs...)
 }
 
-func (builder *AutomatonBuilder) Build() SymbolicAutomaton {
-	dg := graph.NewLabeledDirected[symbols.Symbol, Edge, Location](
-		builder.locations, builder.edges,
-	)
+func (builder *SymbolicAutomatonBuilder) Build() SymbolicAutomaton {
+	dg := graph.NewLabeledDirected(builder.locations, builder.edges)
 	return *NewSymbolicAutomaton(*NewAutomaton(dg, builder.initial))
 }

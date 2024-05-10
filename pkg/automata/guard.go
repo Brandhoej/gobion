@@ -50,12 +50,12 @@ func (guard Guard) Negation() Guard {
 	return NewGuard(negation)
 }
 
-func (guard Guard) IsSatisfied(valuations language.Valuations, solver *Interpreter) bool {
-	return solver.IsSatisfied(valuations, guard.condition)
+func (guard Guard) IsSatisfied(valuations language.Valuations, interpreter *Interpreter) bool {
+	return interpreter.IsSatisfied(valuations, guard.condition)
 }
 
-func (guard Guard) IsSatisfiable(solver *Interpreter) bool {
-	return solver.IsSatisfiable(guard.condition)
+func (guard Guard) IsSatisfiable(interpreter *Interpreter) bool {
+	return interpreter.IsSatisfiable(guard.condition)
 }
 
 func (guard Guard) String(symbols symbols.Store[any]) string {

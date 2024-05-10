@@ -110,7 +110,21 @@ func (printer PrettyPrinter) Binary(binary Binary) {
 }
 
 func (printer PrettyPrinter) ClockCondition(condition ClockCondition) {
-	panic("Not implemented yet")
+	lhs, _ := printer.symbols.Item(condition.lhs)
+	rhs, _ := printer.symbols.Item(condition.rhs)
+	printer.WriteString(fmt.Sprintf("%s - %s", lhs, rhs))
+
+	if condition.relation.Strictness() == zones.Strict {
+		printer.WriteString(" < ")
+	} else {
+		printer.WriteString(" ≤ ")
+	}
+
+	if condition.relation.IsInfinity() {
+		printer.WriteString("∞")
+	} else {
+		printer.WriteString(fmt.Sprintf("%v", condition.relation.Limit()))
+	}
 }
 
 func (printer PrettyPrinter) Integer(integer Integer) {
@@ -138,13 +152,26 @@ func (printer PrettyPrinter) Unary(unary Unary) {
 }
 
 func (printer PrettyPrinter) BlockExpression(block BlockExpression) {
-	printer.WriteString("{")
-	for idx := range block.statements {
-		block.statements[idx].Accept(printer)
-		printer.WriteString("; ")
+	tautology := false
+	if boolean, ok := block.expression.(Boolean); ok && boolean.value {
+		tautology = true
 	}
-	block.expression.Accept(printer)
-	printer.WriteString("}")
+
+	if !tautology {
+		printer.WriteString("{")
+	}
+
+	for idx := range block.statements {
+		if idx > 0 {
+			printer.WriteString("; ")
+		}
+		block.statements[idx].Accept(printer)
+	}
+
+	if !tautology {
+		block.expression.Accept(printer)
+		printer.WriteString("}")
+	}
 }
 
 func (printer PrettyPrinter) IfThenElse(ite IfThenElse) {

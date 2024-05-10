@@ -14,9 +14,9 @@ type IOAutomaton struct {
 	outputs []Action
 }
 
-func NewIOAutomaton(automaton Automaton[Location, IOEdge], inputs, outputs []Action) *IOAutomaton {
+func NewIOAutomaton(automaton *Automaton[Location, IOEdge], inputs, outputs []Action) *IOAutomaton {
 	return &IOAutomaton{
-		Automaton: automaton,
+		Automaton: *automaton,
 		inputs:    inputs,
 		outputs:   outputs,
 	}
@@ -55,6 +55,9 @@ func (automaton IOAutomaton) Outgoing(location symbols.Symbol, action Action) []
 }
 
 func (automaton *IOAutomaton) DOT(writer io.Writer, store symbols.Store[any]) {
+	// TODO: Merge edges with no update and guard.
+	// TODO: Mark the initial location with an arrow inwards.
+	// TODO: Make output edges dotted.
 	automaton.graph.DOT(
 		writer,
 		func(location Location) string {
