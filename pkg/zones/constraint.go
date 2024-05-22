@@ -116,6 +116,34 @@ func (element Relation) Strictness() Strictness {
 	return Strictness(element & Weak)
 }
 
+func (lhs Relation) GT(rhs Relation) bool {
+	if rhs.IsInfinity() && !lhs.IsInfinity() {
+		return false
+	}
+	if lhs.IsInfinity() && !rhs.IsInfinity() {
+		return true
+	}
+	return lhs > rhs
+}
+
+func (lhs Relation) GE(rhs Relation) bool {
+	return lhs == rhs || lhs.GT(rhs)
+}
+
+func (lhs Relation) LT(rhs Relation) bool {
+	if !rhs.IsInfinity() && lhs.IsInfinity() {
+		return false
+	}
+	if !lhs.IsInfinity() && rhs.IsInfinity() {
+		return true
+	}
+	return lhs < rhs
+}
+
+func (lhs Relation) LE(rhs Relation) bool {
+	return lhs == rhs || lhs.LT(rhs)
+}
+
 // Returns a pretty printed string of the element as a tuple if not infinity.
 func (element Relation) String() string {
 	if element.IsInfinity() {

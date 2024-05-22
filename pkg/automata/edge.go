@@ -32,7 +32,7 @@ func (edge Edge) Destination() symbols.Symbol {
 }
 
 func (edge Edge) IsEnabled(valuations language.Valuations, solver *Interpreter) bool {
-	return edge.guard.IsSatisfied(valuations, solver)
+	return solver.IsSatisfied(valuations, edge.guard.condition)
 }
 
 func (edge Edge) Traverse(state State, solver *Interpreter) State {

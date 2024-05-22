@@ -48,7 +48,7 @@ func (automaton SymbolicAutomaton) Complete(interpreter *Interpreter, complete f
 
 		// If the negation of all disjunctions of edge guards constrained by the invariant
 		// still has a solution then we have a "missing" edge to the completion destination.
-		if missing.IsSatisfiable(interpreter) {
+		if interpreter.IsSatisfiable(missing.condition) {
 			destination := complete(source, negation)
 			update := NewUpdate(language.NewTrue())
 			edge := NewEdge(source, negation, update, destination)

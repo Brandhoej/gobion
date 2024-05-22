@@ -54,7 +54,7 @@ func Test_IsSatisfiable(t *testing.T) {
 		xVal, yVal := rand.Intn(1000)-500, rand.Intn(1000)-500
 		valuations.Assign(x, language.NewInteger(xVal))
 		valuations.Assign(y, language.NewInteger(yVal))
-		satisfiable := guard.IsSatisfied(valuations, solver)
+		satisfiable := solver.IsSatisfied(valuations, guard.condition)
 
 		// Assert
 		expected := ((xVal >= 2) || (yVal <= 1 || yVal >= 3))

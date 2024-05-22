@@ -109,24 +109,6 @@ func (printer PrettyPrinter) Binary(binary Binary) {
 	binary.RHS().Accept(printer)
 }
 
-func (printer PrettyPrinter) ClockCondition(condition ClockCondition) {
-	lhs, _ := printer.symbols.Item(condition.lhs)
-	rhs, _ := printer.symbols.Item(condition.rhs)
-	printer.WriteString(fmt.Sprintf("%s - %s", lhs, rhs))
-
-	if condition.relation.Strictness() == zones.Strict {
-		printer.WriteString(" < ")
-	} else {
-		printer.WriteString(" ≤ ")
-	}
-
-	if condition.relation.IsInfinity() {
-		printer.WriteString("∞")
-	} else {
-		printer.WriteString(fmt.Sprintf("%v", condition.relation.Limit()))
-	}
-}
-
 func (printer PrettyPrinter) Integer(integer Integer) {
 	printer.WriteString(
 		fmt.Sprintf("%v", integer.Value()),

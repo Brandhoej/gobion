@@ -84,7 +84,7 @@ func (dbm DBM) Clock() {
 					dbm.Constraint(k, j),
 				)
 				// i -> k -> j is shorter than i -> j
-				if pathIKJ < dbm.Constraint(i, j) {
+				if pathIKJ.LT(dbm.Constraint(i, j)) {
 					dbm.Constrain(i, j, pathIKJ)
 				}
 			}
@@ -108,8 +108,8 @@ func (lhs DBM) Relation(rhs DBM, from, to Clock) (subset bool, superset bool) {
 			lhsConstraint := lhs.Constraint(row, column)
 			rhsConstraint := rhs.Constraint(row, column)
 
-			subset = subset && (lhsConstraint <= rhsConstraint)
-			superset = superset && (lhsConstraint >= rhsConstraint)
+			subset = subset && lhsConstraint.LE(rhsConstraint)
+			superset = superset && lhsConstraint.GE(rhsConstraint)
 		}
 	}
 
@@ -121,9 +121,9 @@ func (lhs DBM) Relation(rhs DBM, from, to Clock) (subset bool, superset bool) {
 func (lhs DBM) Intersection(rhs DBM, from, to Clock) bool {
 	for row := from; row < to; row++ {
 		for column := from; column < to; column++ {
-			if lhs.Constraint(row, column) > rhs.Constraint(row, column) {
+			if lhs.Constraint(row, column).GT(rhs.Constraint(row, column)) {
 				lhs.Constrain(row, column, rhs.Constraint(row, column))
-				if rhs.Constraint(row, column).Negation() >= lhs.Constraint(column, row) {
+				if rhs.Constraint(row, column).Negation().GE(lhs.Constraint(column, row)) {
 					return false
 				}
 			}
@@ -138,7 +138,7 @@ func (lhs DBM) Intersection(rhs DBM, from, to Clock) bool {
 func (lhs DBM) ConvexUnion(rhs DBM, from, to Clock) {
 	for row := from; row < to; row++ {
 		for column := from; column < to; column++ {
-			if lhs.Constraint(row, column) < rhs.Constraint(row, column) {
+			if lhs.Constraint(row, column).LT(rhs.Constraint(row, column)) {
 				lhs.Constrain(row, column, rhs.Constraint(row, column))
 			}
 		}
@@ -149,7 +149,7 @@ func (lhs DBM) ConvexUnion(rhs DBM, from, to Clock) {
 // However, it does not check if diagonals are invalid.
 func (dbm DBM) ConstrainAndClose(row, column Clock, element Relation) {
 	// Only if we are reducing the amount of valuations do we actually constrain it.
-	if dbm.Constraint(row, column) > element {
+	if dbm.Constraint(row, column).GT(element) {
 		dbm.Constrain(row, column, element)
 		// If the negation is greater than or equal to column -> row.
 		// If this is the case then it is implied that there exists a
@@ -158,7 +158,7 @@ func (dbm DBM) ConstrainAndClose(row, column Clock, element Relation) {
 		// introduces a contradiction that implies clocks i and j should
 		// both be ahead or behind of each other in terms of time,
 		// which is not feasible.
-		if element.Negation() >= dbm.Constraint(column, row) {
+		if element.Negation().GE(dbm.Constraint(column, row)) {
 			dbm.Empty()
 		}
 
@@ -207,7 +207,7 @@ func (dbm DBM) CloseRowColumn(row, column Clock) {
 
 		// i -> row -> column => i -> column
 		pathIC := pathIR.Add(pathRC)
-		if dbm.Constraint(i, column) <= pathIC {
+		if dbm.Constraint(i, column).LE(pathIC) {
 			continue
 		}
 		dbm.Constrain(i, column, pathIC)
@@ -221,7 +221,7 @@ func (dbm DBM) CloseRowColumn(row, column Clock) {
 
 			// i -> column -> j => i -> j
 			pathIJ := pathIC.Add(pathCJ)
-			if dbm.Constraint(i, j) > pathIJ {
+			if dbm.Constraint(i, j).GT(pathIJ) {
 				dbm.Constrain(i, j, pathIJ)
 			}
 		}
@@ -249,11 +249,11 @@ func (dbm DBM) Close() {
 
 				pathIJ := dbm.Constraint(i, j)
 				pathIKJ := pathIK.Add(pathKJ)
-				if pathIJ > pathIKJ {
+				if pathIJ.GT(pathIKJ) {
 					dbm.Constrain(i, j, pathIKJ)
 				}
 
-				if dbm.Constraint(i, j) < Zero {
+				if dbm.Constraint(i, j).LT(Zero) {
 					dbm.Empty()
 				}
 			}
@@ -283,7 +283,7 @@ func (dbm DBM) Reduction() graph.Edges[Clock, Constraint] {
 
 				pathIJ := dbm.Constraint(i, j)
 				pathIKJ := pathIK.Add(pathKJ)
-				if pathIJ <= pathIKJ {
+				if pathIJ.LE(pathIKJ) {
 					redundant.Set(uint32(dbm.Index(i, j)))
 				}
 			}
@@ -320,7 +320,7 @@ func (dbm DBM) IsClosed() bool {
 
 				pathRowColumn := dbm.Constraint(row, column)
 				pathRowIColumn := pathRowI.Add(pathIColumn)
-				if pathRowColumn > pathRowIColumn {
+				if pathRowColumn.GT(pathRowIColumn) {
 					return false
 				}
 			}
@@ -349,13 +349,13 @@ func (dbm DBM) Empty() {
 
 // Checks if the DBM is empty.
 func (dbm DBM) IsConsistent() bool {
-	if dbm.Diagonal(Reference) < Zero {
+	if dbm.Diagonal(Reference).LT(Zero) {
 		return false
 	}
 
 	for clock := Reference; clock < dbm.clocks; clock++ {
-		if dbm.Upper(clock) < dbm.Lower(clock) ||
-			dbm.Diagonal(clock) < Zero {
+		if dbm.Upper(clock).LT(dbm.Lower(clock)) ||
+			dbm.Diagonal(clock).LT(Zero) {
 			dbm.Empty()
 			return false
 		}
@@ -444,7 +444,7 @@ func (dbm DBM) Down() {
 				// difference constraints. This is provided that there even is a finite
 				// lower bound on the column. If the lower bound were infinity, it would
 				// imply that there is no lower bound for the constraint between clock.
-				if dbm.Constraint(j, i) < dbm.Lower(i) {
+				if dbm.Constraint(j, i).LT(dbm.Lower(i)) {
 					// The difference bound between the row and coulmn was stricter than
 					// that of the reference clock.
 					dbm.SetLower(i, dbm.Constraint(j, i))
@@ -456,7 +456,9 @@ func (dbm DBM) Down() {
 
 // Returns true if the relation over the two clocks lies within the DBM.
 func (dbm DBM) Satisfies(row, column Clock, relation Relation) bool {
-	return dbm.Constraint(row, column) >= relation && dbm.Constraint(column, row) <= relation.Negation()
+	pos := dbm.Constraint(row, column)
+	neg := dbm.Constraint(column, row)
+	return !(pos > relation && relation.Negation().GE(neg))
 }
 
 // Returns true if all clocks' upper bound is infinity.
@@ -523,11 +525,11 @@ func (dbm DBM) Shift(clock Clock, limit int) {
 	}
 
 	// It might be that the lower bound is inconsistent and should be clamped.
-	if dbm.Lower(clock) > Zero {
+	if dbm.Lower(clock).GT(Zero) {
 		dbm.SetLower(clock, Zero)
 	}
 	// It might be that the upper bound is inconsistent and should be clamped.
-	if dbm.Upper(clock) < Zero {
+	if dbm.Upper(clock).LT(Zero) {
 		dbm.SetUpper(clock, Zero)
 	}
 }
@@ -541,11 +543,11 @@ func (dbm DBM) Norm(maximums ...int) {
 		pos := NewRelation(maximums[i-1], Weak)
 		neg := NewRelation(maximums[i-1], Strict)
 
-		if dbm.Upper(i) > pos {
+		if dbm.Upper(i).GT(pos) {
 			dbm.SetUpper(i, Infinity)
 		}
 
-		if dbm.Lower(i) > neg {
+		if dbm.Lower(i).GT(neg) {
 			dbm.SetLower(i, neg)
 		}
 
@@ -559,9 +561,9 @@ func (dbm DBM) Norm(maximums ...int) {
 				continue
 			}
 
-			if constraint > pos {
+			if constraint.GT(pos) {
 				dbm.Constrain(i, j, Infinity)
-			} else if constraint < neg {
+			} else if constraint.LT(neg) {
 				dbm.Constrain(i, j, neg)
 			}
 		}
