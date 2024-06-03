@@ -11,7 +11,6 @@ import "C"
 type FunctionDeclaration struct {
 	context               *Context
 	z3FunctionDeclaration C.Z3_func_decl
-	noEq
 }
 
 func (context *Context) wrapFunctionDeclaration(function C.Z3_func_decl) *FunctionDeclaration {

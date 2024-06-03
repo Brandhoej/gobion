@@ -26,16 +26,12 @@ const (
 type AST struct {
 	context *Context
 	z3AST   C.Z3_ast
-	noEq
 }
 
 func (context *Context) wrapAST(z3AST C.Z3_ast) *AST {
 	ast := &AST{
 		context: context,
 		z3AST:   z3AST,
-
-		// AST is not directly comparable and Equals should be used instead.
-		noEq: noEq{},
 	}
 
 	// We force our own reference counting of the AST by using the specific rc function to create the context.
